@@ -1,0 +1,93 @@
+<!--
+  ~ Hibernate, Relational Persistence for Idiomatic Java
+  ~
+  ~ Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+  ~ indicated by the @author tags or express copyright attribution
+  ~ statements applied by the authors.  All third-party contributions are
+  ~ distributed under license by Red Hat Inc.
+  ~
+  ~ This copyrighted material is made available to anyone wishing to use, modify,
+  ~ copy, or redistribute it subject to the terms and conditions of the GNU
+  ~ Lesser General Public License, as published by the Free Software Foundation.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  ~ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this distribution; if not, write to:
+  ~ Free Software Foundation, Inc.
+  ~ 51 Franklin Street, Fifth Floor
+  ~ Boston, MA  02110-1301  USA
+  -->
+
+<project name="javaformattest">
+	<property name="build.dir" location="../../target/javaformattest" />
+	<property name="hibernate-libs" location="../../lib/testlibs" />
+	<property name="target.dir" location="../../target"/>
+	<property name="test-classes" location="${target.dir}/test-classes"/>
+	<property file="${test-classes}/hibernate.properties" />
+	<property name="lib.dir" location="../../lib"/>
+	<property file="${test-classes}/hibernate.properties" />
+
+
+
+	<path id="tasks.classpath">
+		<pathelement path="${test-classes}" />
+		<pathelement path="${target.dir}/classes" />
+
+		<fileset dir="${hibernate-libs}">
+			<include name="**/*.jar" />
+		</fileset>
+
+		<pathelement path="${lib.dir}/freemarker.jar" />
+		
+		<fileset dir="${lib.dir}">
+			<include name="**/*eclipse*.jar" />
+		</fileset>
+		<pathelement path="${lib.dir}/jdbc/hsqldb.jar" />
+	</path>
+	
+	<target name="cleanup">
+		<delete dir="${build.dir}"/>
+	</target>
+	
+	<target name="prepare">
+		<copy todir="${build.dir}">
+		  <fileset dir="${test-classes}" includes="formatting/**/*"/>
+		</copy>
+	</target>
+	
+	<target name="fileset">		
+		<taskdef name="javaformatter" classname="org.hibernate.tool.ant.JavaFormatterTask" classpathref="tasks.classpath"/>
+				
+		<javaformatter> 
+		   <fileset dir="${build.dir}">
+		   	   <include name="formatting/**/*"/>
+		   	</fileset>
+		</javaformatter>
+	</target>
+	
+	<target name="configtest">		
+		<taskdef name="javaformatter" classname="org.hibernate.tool.ant.JavaFormatterTask" classpathref="tasks.classpath"/>
+				
+		<javaformatter configurationfile="${test-classes}/emptyconfig.properties"> 
+		   <fileset dir="${build.dir}">
+		   	   <include name="formatting/**/*"/>
+		   	</fileset>
+		</javaformatter>
+	</target>
+	
+	<target name="noconfigtest">		
+			<taskdef name="javaformatter" classname="org.hibernate.tool.ant.JavaFormatterTask" classpathref="tasks.classpath"/>
+					
+			<javaformatter> 
+			   <fileset dir="${build.dir}">
+			   	   <include name="formatting/**/*"/>
+			   	</fileset>
+			</javaformatter>
+	</target>
+		
+
+</project>
