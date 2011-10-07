@@ -1,58 +1,65 @@
 /*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
+/*
  * Created on 2004-11-23
  *
  */
 package org.hibernate.tool.test.jdbc2cfg.identity;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-
 import org.hibernate.cfg.JDBCMetaDataConfiguration;
 import org.hibernate.cfg.reveng.dialect.H2MetaDataDialect;
-import org.hibernate.dialect.Dialect;
 import org.hibernate.dialect.H2Dialect;
 import org.hibernate.testing.RequiresDialect;
 
 /**
  * @author max
- *
  */
-@RequiresDialect( H2Dialect.class )
+@RequiresDialect(H2Dialect.class)
 public class H2IdentityTest extends AbstractIdentityTest {
 
-	
-	/**
-	 * @return
-	 */
-	protected String[] getDropSQL() {
-		return new String[] {
-				"drop table `autoinc`",
-				"drop table `noautoinc`",                
-		};	
-	}
 
-	/**
-	 * @return
-	 */
-	protected String[] getCreateSQL() {
-		
-		return new String[] {
-				"CREATE TABLE `autoinc` (`id` int(11) NOT NULL identity,  `data` varchar(100) default NULL,  PRIMARY KEY  (`id`))",
-				"CREATE TABLE `noautoinc` (`id` int(11) NOT NULL,  `data` varchar(100) default NULL,  PRIMARY KEY  (`id`))",
-		};
-	}
-	
-	public boolean appliesTo(Dialect dialect) {
-		return dialect instanceof H2Dialect;
-	}
-	
-	protected void configure(JDBCMetaDataConfiguration configuration) {
-		configuration.setProperty( "hibernatetool.metadatadialect", H2MetaDataDialect.class.getName() );
-	}
-	
+    @Override
+    protected String[] getDropSQL() {
+        return new String[] {
+                "drop table `autoinc`",
+                "drop table `noautoinc`",
+        };
+    }
 
-	public static Test suite() {
-		return new TestSuite(H2IdentityTest.class);
-	}
-    
+    @Override
+    protected String[] getCreateSQL() {
+
+        return new String[] {
+                "CREATE TABLE `autoinc` (`id` int(11) NOT NULL identity,  `data` varchar(100) default NULL,  PRIMARY KEY  (`id`))",
+                "CREATE TABLE `noautoinc` (`id` int(11) NOT NULL,  `data` varchar(100) default NULL,  PRIMARY KEY  (`id`))",
+        };
+    }
+
+    @Override
+    protected void configure(JDBCMetaDataConfiguration configuration) {
+        configuration.setProperty( "hibernatetool.metadatadialect", H2MetaDataDialect.class.getName() );
+    }
+
 }

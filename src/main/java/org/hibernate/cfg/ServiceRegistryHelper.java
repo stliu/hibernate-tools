@@ -22,59 +22,36 @@
  * Boston, MA  02110-1301  USA
  */
 
-package org.hibernate.tool.hbm2x.hbm2hbmxml;
+package org.hibernate.cfg;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
-public interface GlarchProxy {
+import org.hibernate.internal.util.config.ConfigurationHelper;
+import org.hibernate.service.ServiceRegistry;
 
-    public int getVersion();
+/**
+ * @author Strong Liu
+ */
+public class ServiceRegistryHelper {
+    private static final Map<Configuration, ServiceRegistry> cache = new HashMap<Configuration, ServiceRegistry>();
 
-    public int getDerivedVersion();
+    public static ServiceRegistry getDefaultServiceRegistry(Configuration configuration) {
+        ServiceRegistry registry = cache.get( configuration );
+        if ( registry == null ) {
+            Properties properties = new Properties();
+            properties.putAll( configuration.getProperties() );
+            Environment.verifyProperties( properties );
+            ConfigurationHelper.resolvePlaceHolders( properties );
+            registry =  new org.hibernate.service.ServiceRegistryBuilder(
+                    properties
+            ).buildServiceRegistry();
+            cache.put( configuration, registry );
 
-    public void setVersion(int version);
+        }
 
-    public String getName();
 
-    public void setName(String name);
-
-    public GlarchProxy getNext();
-
-    public void setNext(GlarchProxy next);
-
-    public short getOrder();
-
-    public void setOrder(short order);
-
-    public List getStrings();
-
-    public void setStrings(List strings);
-
-    public Map getDynaBean();
-
-    public void setDynaBean(Map bean);
-
-    public Map getStringSets();
-
-    public void setStringSets(Map stringSets);
-
-    public List getFooComponents();
-
-    public void setFooComponents(List fooComponents);
-
-    public GlarchProxy[] getProxyArray();
-
-    public void setProxyArray(GlarchProxy[] proxyArray);
-
-    public Object getAny();
-
-    public void setAny(Object any);
+        return registry;
+    }
 }
-
-
-
-
-
-
-

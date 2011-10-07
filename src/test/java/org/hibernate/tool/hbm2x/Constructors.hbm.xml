@@ -1,7 +1,31 @@
 <?xml version="1.0"?>
-<!DOCTYPE hibernate-mapping PUBLIC 
-	"-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-	"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!--
+  ~ Hibernate, Relational Persistence for Idiomatic Java
+  ~
+  ~ Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+  ~ indicated by the @author tags or express copyright attribution
+  ~ statements applied by the authors.  All third-party contributions are
+  ~ distributed under license by Red Hat Inc.
+  ~
+  ~ This copyrighted material is made available to anyone wishing to use, modify,
+  ~ copy, or redistribute it subject to the terms and conditions of the GNU
+  ~ Lesser General Public License, as published by the Free Software Foundation.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  ~ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this distribution; if not, write to:
+  ~ Free Software Foundation, Inc.
+  ~ 51 Franklin Street, Fifth Floor
+  ~ Boston, MA  02110-1301  USA
+  -->
+
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <!-- 
 
@@ -12,60 +36,60 @@
 <hibernate-mapping>
 
     <class name="Person">
-    	<id name="id" type="string">
-    		<generator class="native"/>
-    	</id>
+        <id name="id" type="string">
+            <generator class="native"/>
+        </id>
 
-    	<property name="name" type="string" not-null="true"/>
-    	
-    	<component name="address" class="EntityAddress">
-    		<property name="street" type="string" not-null="true"/>
-    		<property name="city" type="string"/>
-    	</component>
-    	
-    	<subclass name="Employee">
-			<property name="salary" type="double"/>
-		</subclass>
-	</class>
+        <property name="name" type="string" not-null="true"/>
+
+        <component name="address" class="EntityAddress">
+            <property name="street" type="string" not-null="true"/>
+            <property name="city" type="string"/>
+        </component>
+
+        <subclass name="Employee">
+            <property name="salary" type="double"/>
+        </subclass>
+    </class>
 
     <class name="Company">
-    	<composite-id name="id" class="CompanyId">
-    	  <key-property name="code" type="long"/>
-    	  <key-property name="subcode" type="char"/>
-    	</composite-id>
+        <composite-id name="id" class="CompanyId">
+            <key-property name="code" type="long"/>
+            <key-property name="subcode" type="char"/>
+        </composite-id>
 
-    	<property name="brand" type="string" not-null="true"/>
-    	
-    	<!-- HBX-607, formula not in full constructor -->
-    	<property name="value" type="string" formula="42"/>
-    	
-    	<set name="employees">
-    	  <key>
-    	    <column name="ceo_id"/>
-    	    <column name="ceo_subid"/>
-    	  </key>
-    	  <one-to-many class="Employee"/>
-    	</set>
-    	
-    	<subclass name="BigCompany">
-		   <many-to-one name="ceo" class="Employee"/>
-    	</subclass>
+        <property name="brand" type="string" not-null="true"/>
+
+        <!-- HBX-607, formula not in full constructor -->
+        <property name="value" type="string" formula="42"/>
+
+        <set name="employees">
+            <key>
+                <column name="ceo_id"/>
+                <column name="ceo_subid"/>
+            </key>
+            <one-to-many class="Employee"/>
+        </set>
+
+        <subclass name="BigCompany">
+            <many-to-one name="ceo" class="Employee"/>
+        </subclass>
     </class>
-    
+
     <class name="BrandProduct">
-		<id name="id" type="string">
-    		<generator class="assigned"/>
-    	</id>
-		<version name="aVersion" type="long"/>
-    	<property name="name" type="string"/>      
+        <id name="id" type="string">
+            <generator class="assigned"/>
+        </id>
+        <version name="aVersion" type="long"/>
+        <property name="name" type="string"/>
     </class>
-  
-    <!-- HBX-584 -->  
-    <class name="SingleFieldClass"> 
-     <id name="id" type="string"> 
-      <generator class="native"/> 
-     </id> 
-    </class> 
-  
-    
+
+    <!-- HBX-584 -->
+    <class name="SingleFieldClass">
+        <id name="id" type="string">
+            <generator class="native"/>
+        </id>
+    </class>
+
+
 </hibernate-mapping>

@@ -1,26 +1,50 @@
 <?xml version="1.0"?>
+<!--
+  ~ Hibernate, Relational Persistence for Idiomatic Java
+  ~
+  ~ Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+  ~ indicated by the @author tags or express copyright attribution
+  ~ statements applied by the authors.  All third-party contributions are
+  ~ distributed under license by Red Hat Inc.
+  ~
+  ~ This copyrighted material is made available to anyone wishing to use, modify,
+  ~ copy, or redistribute it subject to the terms and conditions of the GNU
+  ~ Lesser General Public License, as published by the Free Software Foundation.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  ~ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this distribution; if not, write to:
+  ~ Free Software Foundation, Inc.
+  ~ 51 Franklin Street, Fifth Floor
+  ~ Boston, MA  02110-1301  USA
+  -->
+
 <!DOCTYPE hibernate-mapping PUBLIC
-	"-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-	"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <!-- to test non EJB3 generator in EJB3 -->
 <hibernate-mapping package="org.hibernate.tool.hbm2x">
 
     <class name="Bungalow">
 
-    	<id name="id" type="integer">
+        <id name="id" type="integer">
             <generator class="org.hibernate.id.MultipleHiLoPerTableGenerator"/>
         </id>
 
         <property name="name" type="string" not-null="true" length="100"/>
-        
+
         <!-- test for various dates -->
         <property name="lastModified" type="timestamp"/>
         <property name="dayFree" type="date"/>
         <property name="timeFree" type="time"/>
-        
+
         <many-to-one name="mascot" not-null="true" class="Bungalow"/>
 
-	</class>
+    </class>
 
 </hibernate-mapping>

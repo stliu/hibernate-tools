@@ -1,3 +1,27 @@
+/*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
 package org.hibernate.cfg.reveng;
 
 import java.util.ArrayList;
@@ -10,59 +34,59 @@ import org.hibernate.cfg.reveng.dialect.MetaDataDialect;
 import org.hibernate.internal.util.StringHelper;
 import org.hibernate.mapping.Table;
 
-public class DefaultDatabaseCollector extends AbstractDatabaseCollector  {
+public class DefaultDatabaseCollector extends AbstractDatabaseCollector {
 
-	private Map tables;		
-	private Map qualifiers;
+    private Map<String, Table> tables;
+    private Map<String,List<Table>> qualifiers;
 
-	public DefaultDatabaseCollector(MetaDataDialect metaDataDialect) {
-		super(metaDataDialect);
-		tables = new HashMap();
-		qualifiers = new HashMap();
-	}
-	
-	public Iterator iterateTables() {
-		return tables.values().iterator();
-	}
+    public DefaultDatabaseCollector(MetaDataDialect metaDataDialect) {
+        super( metaDataDialect );
+        tables = new HashMap<String, Table>();
+        qualifiers = new HashMap<String,List<Table>>();
+    }
 
-	public Table addTable(String schema, 
-			String catalog, 
-			String name) {
-		
-        String key = Table.qualify(quote(catalog), quote(schema), quote(name));
-		Table table = (Table) tables.get(key);
-		
-		if (table == null) {
-			table = new Table();
-			table.setAbstract(false);
-			table.setName(name);
-			table.setSchema(schema);
-			table.setCatalog(catalog);
-			tables.put(key, table);
-			
-			String qualifier = StringHelper.qualifier( key );
-			List schemaList = (List) qualifiers.get(qualifier);
-			if(schemaList==null) {
-				schemaList = new ArrayList();
-				qualifiers.put(qualifier, schemaList);				
-			}
-			schemaList.add(table);
-		}
-		else {
-			table.setAbstract(false);
-		}
-		
-		return table;
-	}
+    public Iterator iterateTables() {
+        return tables.values().iterator();
+    }
 
-	public Table getTable(String schema, String catalog, String name) {
-        String key = Table.qualify(quote(catalog), quote(schema), quote(name));
-		return (Table) tables.get(key);
-	}
+    public Table addTable(String schema,
+                          String catalog,
+                          String name) {
 
-	public Iterator getQualifierEntries() {
-		return qualifiers.entrySet().iterator();
-	}
-	
-	
+        String key = Table.qualify( quote( catalog ), quote( schema ), quote( name ) );
+        Table table = tables.get( key );
+
+        if ( table == null ) {
+            table = new Table();
+            table.setAbstract( false );
+            table.setName( name );
+            table.setSchema( schema );
+            table.setCatalog( catalog );
+            tables.put( key, table );
+
+            String qualifier = StringHelper.qualifier( key );
+            List<Table> schemaList = qualifiers.get( qualifier );
+            if ( schemaList == null ) {
+                schemaList = new ArrayList<Table>();
+                qualifiers.put( qualifier, schemaList );
+            }
+            schemaList.add( table );
+        }
+        else {
+            table.setAbstract( false );
+        }
+
+        return table;
+    }
+
+    public Table getTable(String schema, String catalog, String name) {
+        String key = Table.qualify( quote( catalog ), quote( schema ), quote( name ) );
+        return tables.get( key );
+    }
+
+    public Iterator getQualifierEntries() {
+        return qualifiers.entrySet().iterator();
+    }
+
+
 }

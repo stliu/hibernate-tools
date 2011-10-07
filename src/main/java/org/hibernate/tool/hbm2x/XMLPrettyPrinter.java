@@ -1,4 +1,28 @@
 /*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
+/*
  * Created on 17-Dec-2004
  *
  */
@@ -25,133 +49,147 @@ import org.w3c.tidy.Tidy;
 
 /**
  * @author max
- * 
  */
 public final class XMLPrettyPrinter {
 
-	private static final Log log = LogFactory.getLog( XMLPrettyPrinter.class );
+    private static final Log log = LogFactory.getLog( XMLPrettyPrinter.class );
 
-	private XMLPrettyPrinter() {
-		// noop
-	}
+    private XMLPrettyPrinter() {
+        // noop
+    }
 
-	public static void prettyPrint(InputStream in, OutputStream writer)
-			throws IOException {
-		Tidy tidy = getDefaultTidy();
+    public static void prettyPrint(InputStream in, OutputStream writer)
+            throws IOException {
+        Tidy tidy = getDefaultTidy();
 
-		tidy.parse( in, writer );
+        tidy.parse( in, writer );
 
-	}
+    }
 
-	static Tidy getDefaultTidy() throws IOException {
-		Tidy tidy = new Tidy();
+    static Tidy getDefaultTidy() throws IOException {
+        Tidy tidy = new Tidy();
 
-		// no output please!
-		tidy.setErrout( new PrintWriter( new Writer() {
-			public void close() throws IOException {
-			}
+        // no output please!
+        tidy.setErrout(
+                new PrintWriter(
+                        new Writer() {
+                            public void close() throws IOException {
+                            }
 
-			public void flush() throws IOException {
-			}
+                            public void flush() throws IOException {
+                            }
 
-			public void write(char[] cbuf, int off, int len) throws IOException {
-				
-			}
-		} ) );
+                            public void write(char[] cbuf, int off, int len) throws IOException {
 
-		Properties properties = new Properties();
+                            }
+                        }
+                )
+        );
 
-		properties.load( XMLPrettyPrinter.class
-				.getResourceAsStream( "jtidy.properties" ) );
+        Properties properties = new Properties();
 
-		tidy.setConfigurationFromProps( properties );
+        properties.load(
+                XMLPrettyPrinter.class
+                        .getResourceAsStream( "jtidy.properties" )
+        );
 
-		return tidy;
-	}
+        tidy.setConfigurationFromProps( properties );
 
-	public static void prettyPrintFiles(Tidy tidy, File[] inputfiles,
-			File[] outputfiles, boolean silent) throws IOException {
+        return tidy;
+    }
 
-		if ( (inputfiles == null || outputfiles == null )
-				|| (inputfiles.length != outputfiles.length ) ) {
-			throw new IllegalArgumentException(
-					"inputfiles and outputfiles must be not null and have equal length." );
-		}
+    public static void prettyPrintFiles(Tidy tidy, File[] inputfiles,
+                                        File[] outputfiles, boolean silent) throws IOException {
 
-		for (int i = 0; i < outputfiles.length; i++) {
-			prettyPrintFile( tidy, inputfiles[i], outputfiles[i], silent );
-		}
-	}
+        if ( ( inputfiles == null || outputfiles == null )
+                || ( inputfiles.length != outputfiles.length ) ) {
+            throw new IllegalArgumentException(
+                    "inputfiles and outputfiles must be not null and have equal length."
+            );
+        }
 
-	public static void prettyPrintFile(Tidy tidy, File inputFile,
-			File outputFile, boolean silent) throws IOException {
-		log.debug( "XMLPrettyPrinting " + inputFile.getAbsolutePath() );
+        for ( int i = 0; i < outputfiles.length; i++ ) {
+            prettyPrintFile( tidy, inputfiles[i], outputfiles[i], silent );
+        }
+    }
 
-		InputStream is;
-		OutputStream os;
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		is = new BufferedInputStream( new FileInputStream( inputFile ) );
+    public static void prettyPrintFile(Tidy tidy, File inputFile,
+                                       File outputFile, boolean silent) throws IOException {
+        log.debug( "XMLPrettyPrinting " + inputFile.getAbsolutePath() );
 
-		outputFile.getParentFile().mkdirs();
-		outputFile.createNewFile();
-		os = new BufferedOutputStream( bos );
+        InputStream is;
+        OutputStream os;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        is = new BufferedInputStream( new FileInputStream( inputFile ) );
 
-		tidy.parse( is, os );
-		byte[] bs = bos.toByteArray();
-		try {
-			is.close();
-		}
-		catch (IOException e1) {
-			// ignore
-		}
-		try {
-			os.flush();
-			os.close();
-		}
-		catch (IOException e1) {
-			// ignore
-		}
+        outputFile.getParentFile().mkdirs();
+        outputFile.createNewFile();
+        os = new BufferedOutputStream( bos );
 
-		// generate output file
-		if ( tidy.getParseErrors() == 0 ) {
-			BufferedOutputStream out = new BufferedOutputStream(
-					new FileOutputStream( outputFile ) );
-			InputStream in = new ByteArrayInputStream( bs );
-			// Transfer bytes from in to out
-			byte[] buf = new byte[1024];
-			int len;
-			while ( (len = in.read( buf ) ) > 0 ) {
-				out.write( buf, 0, len );
-			}
-			in.close();
-			out.close();
-		}
+        tidy.parse( is, os );
+        byte[] bs = bos.toByteArray();
+        try {
+            is.close();
+        }
+        catch ( IOException e1 ) {
+            // ignore
+        }
+        try {
+            os.flush();
+            os.close();
+        }
+        catch ( IOException e1 ) {
+            // ignore
+        }
 
-		if ( tidy.getParseErrors() > 0 ) {
-			if(silent) {				
-				log.warn("Tidy was unable to process file " + inputFile + ", " + tidy.getParseErrors() + " errors found." );
-			} else {
-				throw new ExporterException( "Tidy was unable to process file "
-						+ inputFile + ", " + tidy.getParseErrors() + " errors found." );
-			}
-		} else {
-			log.debug("XMLPrettyPrinting completed");
-		}
-	}
+        // generate output file
+        if ( tidy.getParseErrors() == 0 ) {
+            BufferedOutputStream out = new BufferedOutputStream(
+                    new FileOutputStream( outputFile )
+            );
+            InputStream in = new ByteArrayInputStream( bs );
+            // Transfer bytes from in to out
+            byte[] buf = new byte[1024];
+            int len;
+            while ( ( len = in.read( buf ) ) > 0 ) {
+                out.write( buf, 0, len );
+            }
+            in.close();
+            out.close();
+        }
 
-	/**
-	 * @param outputdir
-	 * @throws IOException
-	 */
-	public static void prettyPrintDirectory(File outputdir, final String prefix, boolean silent)
-			throws IOException {
-		File[] files = outputdir.listFiles( new FilenameFilter() {
-			public boolean accept(File dir, String name) {
-				return name.endsWith( prefix );
-			}
-		} );
+        if ( tidy.getParseErrors() > 0 ) {
+            if ( silent ) {
+                log.warn( "Tidy was unable to process file " + inputFile + ", " + tidy.getParseErrors() + " errors found." );
+            }
+            else {
+                throw new ExporterException(
+                        "Tidy was unable to process file "
+                                + inputFile + ", " + tidy.getParseErrors() + " errors found."
+                );
+            }
+        }
+        else {
+            log.debug( "XMLPrettyPrinting completed" );
+        }
+    }
 
-		Tidy tidy = getDefaultTidy();
-		prettyPrintFiles( tidy, files, files, silent );
-	}
+    /**
+     * @param outputdir
+     *
+     * @throws IOException
+     */
+    public static void prettyPrintDirectory(File outputdir, final String prefix, boolean silent)
+            throws IOException {
+        File[] files = outputdir.listFiles(
+                new FilenameFilter() {
+                    public boolean accept(File dir, String name) {
+                        return name.endsWith( prefix );
+                    }
+                }
+        );
+
+        Tidy tidy = getDefaultTidy();
+        prettyPrintFiles( tidy, files, files, silent );
+    }
 }

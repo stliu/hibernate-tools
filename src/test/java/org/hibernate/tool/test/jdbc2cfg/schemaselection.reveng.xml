@@ -1,18 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Hibernate, Relational Persistence for Idiomatic Java
+  ~
+  ~ Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+  ~ indicated by the @author tags or express copyright attribution
+  ~ statements applied by the authors.  All third-party contributions are
+  ~ distributed under license by Red Hat Inc.
+  ~
+  ~ This copyrighted material is made available to anyone wishing to use, modify,
+  ~ copy, or redistribute it subject to the terms and conditions of the GNU
+  ~ Lesser General Public License, as published by the Free Software Foundation.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  ~ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this distribution; if not, write to:
+  ~ Free Software Foundation, Inc.
+  ~ 51 Franklin Street, Fifth Floor
+  ~ Boston, MA  02110-1301  USA
+  -->
+
 <!DOCTYPE hibernate-reverse-engineering SYSTEM "http://hibernate.sourceforge.net/hibernate-reverse-engineering-3.0.dtd" >
 
 <hibernate-reverse-engineering>
 
- <!-- a empty one is valid and means select everything without considering schema/catalog/table -->
- <schema-selection/>
- 
- <!-- Only for something matching in schema OVRTEST -->
- <schema-selection match-schema="OVRTEST"/>
+    <!-- a empty one is valid and means select everything without considering schema/catalog/table -->
+    <schema-selection/>
 
- <!-- Only for something matching in catalog UBERCATALOG and schema OVRTEST -->
- <schema-selection match-catalog="UBERCATALOG" match-schema="OVRTEST"/>
+    <!-- Only for something matching in schema OVRTEST -->
+    <schema-selection match-schema="OVRTEST"/>
 
- <!-- .* is valid, will be translated into % -->
- <schema-selection match-catalog="PUBLIC.*" match-schema="OVRTEST" match-table=".*"/> 
+    <!-- Only for something matching in catalog UBERCATALOG and schema OVRTEST -->
+    <schema-selection match-catalog="UBERCATALOG" match-schema="OVRTEST"/>
+
+    <!-- .* is valid, will be translated into % -->
+    <schema-selection match-catalog="PUBLIC.*" match-schema="OVRTEST" match-table=".*"/>
 
 </hibernate-reverse-engineering>

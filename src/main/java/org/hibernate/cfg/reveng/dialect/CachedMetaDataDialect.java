@@ -1,3 +1,27 @@
+/*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
 package org.hibernate.cfg.reveng.dialect;
 
 import java.util.ArrayList;
@@ -9,200 +33,237 @@ import java.util.Map;
 import org.hibernate.cfg.reveng.ReverseEngineeringRuntimeInfo;
 
 public class CachedMetaDataDialect implements MetaDataDialect {
-	
-	MetaDataDialect delegate;
-	private Map cachedTables = new HashMap();
-	private Map cachedColumns = new HashMap();
-	private Map cachedExportedKeys = new HashMap();
-	private Map cachedPrimaryKeys = new HashMap();
-	private Map cachedIndexInfo = new HashMap();
-	private Map cachedPrimaryKeyStrategyName = new HashMap();
 
-	public CachedMetaDataDialect(MetaDataDialect realMetaData) {
-		this.delegate = realMetaData;
-	}
-	
-	public void close() {
-		delegate.close();
-	}
+    MetaDataDialect delegate;
+    private Map cachedTables = new HashMap();
+    private Map cachedColumns = new HashMap();
+    private Map cachedExportedKeys = new HashMap();
+    private Map cachedPrimaryKeys = new HashMap();
+    private Map cachedIndexInfo = new HashMap();
+    private Map cachedPrimaryKeyStrategyName = new HashMap();
 
-	public void configure(ReverseEngineeringRuntimeInfo info) {
-        delegate.configure(info);       
+    public CachedMetaDataDialect(MetaDataDialect realMetaData) {
+        this.delegate = realMetaData;
     }
-	
-	public void close(Iterator iterator) {
-		if(iterator instanceof CachedIterator) {
-			CachedIterator ci = (CachedIterator) iterator;
-			if(ci.getOwner()==this) {
-				ci.store();
-				return;
-			} 
-		}
-		delegate.close( iterator );
-	}
 
-	
+    public void close() {
+        delegate.close();
+    }
 
-	public Iterator getColumns(String catalog, String schema, String table, String column) {
-		StringKey sk = new StringKey(new String[] { catalog, schema, table, column });
-		List cached = (List) cachedColumns.get( sk );
-		if(cached==null) {
-			cached = new ArrayList();
-			return new CachedIterator(this, cachedColumns, sk, cached, delegate.getColumns( catalog, schema, table, column ));
-		} else {
-			return cached.iterator();
-		}		
-	}
+    public void configure(ReverseEngineeringRuntimeInfo info) {
+        delegate.configure( info );
+    }
 
-	public Iterator getExportedKeys(String catalog, String schema, String table) {
-		StringKey sk = new StringKey(new String[] { catalog, schema, table });
-		List cached = (List) cachedExportedKeys.get( sk );
-		if(cached==null) {
-			cached = new ArrayList();
-			return new CachedIterator(this, cachedExportedKeys, sk, cached, delegate.getExportedKeys( catalog, schema, table ));
-		} else {
-			return cached.iterator();
-		}		
-	}
+    public void close(Iterator iterator) {
+        if ( iterator instanceof CachedIterator ) {
+            CachedIterator ci = (CachedIterator) iterator;
+            if ( ci.getOwner() == this ) {
+                ci.store();
+                return;
+            }
+        }
+        delegate.close( iterator );
+    }
 
-	public Iterator getIndexInfo(String catalog, String schema, String table) {
-		StringKey sk = new StringKey(new String[] { catalog, schema, table });
-		List cached = (List) cachedIndexInfo.get( sk );
-		if(cached==null) {
-			cached = new ArrayList();
-			return new CachedIterator(this, cachedIndexInfo, sk, cached, delegate.getIndexInfo( catalog, schema, table ));
-		} else {
-			return cached.iterator();
-		}
-	}
 
-	public Iterator getPrimaryKeys(String catalog, String schema, String name) {
-		StringKey sk = new StringKey(new String[] { catalog, schema, name });
-		List cached = (List) cachedPrimaryKeys .get( sk );
-		if(cached==null) {
-			cached = new ArrayList();
-			return new CachedIterator(this, cachedPrimaryKeys, sk, cached, delegate.getPrimaryKeys( catalog, schema, name ));
-		} else {
-			return cached.iterator();
-		}
-	}
+    public Iterator getColumns(String catalog, String schema, String table, String column) {
+        StringKey sk = new StringKey( new String[] { catalog, schema, table, column } );
+        List cached = (List) cachedColumns.get( sk );
+        if ( cached == null ) {
+            cached = new ArrayList();
+            return new CachedIterator(
+                    this,
+                    cachedColumns,
+                    sk,
+                    cached,
+                    delegate.getColumns( catalog, schema, table, column )
+            );
+        }
+        else {
+            return cached.iterator();
+        }
+    }
 
-	public Iterator getTables(String catalog, String schema, String table) {
-		StringKey sk = new StringKey(new String[] { catalog, schema, table });
-		List cached = (List) cachedTables.get( sk );
-		if(cached==null) {
-			cached = new ArrayList();
-			return new CachedIterator(this, cachedTables, sk, cached, delegate.getTables( catalog, schema, table ));
-		} else {
-			return cached.iterator();
-		}
-	}
+    public Iterator getExportedKeys(String catalog, String schema, String table) {
+        StringKey sk = new StringKey( new String[] { catalog, schema, table } );
+        List cached = (List) cachedExportedKeys.get( sk );
+        if ( cached == null ) {
+            cached = new ArrayList();
+            return new CachedIterator(
+                    this,
+                    cachedExportedKeys,
+                    sk,
+                    cached,
+                    delegate.getExportedKeys( catalog, schema, table )
+            );
+        }
+        else {
+            return cached.iterator();
+        }
+    }
 
-	public Iterator getSuggestedPrimaryKeyStrategyName(String catalog, String schema, String table) {
-		StringKey sk = new StringKey(new String[] { catalog, schema, table });
-		List cached = (List) cachedPrimaryKeyStrategyName.get( sk );
-		if(cached==null) {
-			cached = new ArrayList();
-			return new CachedIterator(this, cachedPrimaryKeyStrategyName, sk, cached, delegate.getSuggestedPrimaryKeyStrategyName( catalog, schema, table ));
-		} else {
-			return cached.iterator();
-		}
-	}
-	
-	public boolean needQuote(String name) {
-		return delegate.needQuote( name );
-	}
-	
-	private static class StringKey {
-		String[] keys;
-		
-		StringKey(String[] key) {
-			this.keys=key;
-		}
-		
-		public int hashCode() {
-			if (keys == null)
-	            return 0;
-	 
-	        int result = 1;
-	 
-	        for (int i = 0; i < keys.length; i++) {
-				Object element = keys[i];
-			    result = 31 * result + (element == null ? 0 : element.hashCode());
-	        }
-	        
-	        return result;	 
-		}
-		
-		public boolean equals(Object obj) {
-			StringKey other = (StringKey) obj;
-			String[] otherKeys = other.keys;
-			
-			if(otherKeys.length!=keys.length) {
-				return false;
-			}
-			
-			for (int i = otherKeys.length-1; i >= 0; i--) {
-				if(!safeEquals(otherKeys[i],(keys[i]))) {
-					return false;
-				}
-			}
-			
-			return true;
-		}
-		
-		private boolean safeEquals(Object obj1, Object obj2) {
-			if ( obj1 == null ) {
-				return obj2 == null;
-			}
-	        return obj1.equals( obj2 );
-		}
-	}
-	
-	private static class CachedIterator implements Iterator {
+    public Iterator getIndexInfo(String catalog, String schema, String table) {
+        StringKey sk = new StringKey( new String[] { catalog, schema, table } );
+        List cached = (List) cachedIndexInfo.get( sk );
+        if ( cached == null ) {
+            cached = new ArrayList();
+            return new CachedIterator(
+                    this,
+                    cachedIndexInfo,
+                    sk,
+                    cached,
+                    delegate.getIndexInfo( catalog, schema, table )
+            );
+        }
+        else {
+            return cached.iterator();
+        }
+    }
 
-		private List cache; 
-		private StringKey target;
-		private Map destination;
-		private Iterator realIterator;
-		final CachedMetaDataDialect owner;
-		public CachedIterator(CachedMetaDataDialect owner, Map destination, StringKey sk, List cache, Iterator realIterator) {
-			this.owner = owner;
-			this.destination = destination;
-			this.target = sk;
-			this.realIterator = realIterator;
-			this.cache = cache;
-		}
-		
-		public CachedMetaDataDialect getOwner() {
-			return owner;
-		}
+    public Iterator getPrimaryKeys(String catalog, String schema, String name) {
+        StringKey sk = new StringKey( new String[] { catalog, schema, name } );
+        List cached = (List) cachedPrimaryKeys.get( sk );
+        if ( cached == null ) {
+            cached = new ArrayList();
+            return new CachedIterator(
+                    this,
+                    cachedPrimaryKeys,
+                    sk,
+                    cached,
+                    delegate.getPrimaryKeys( catalog, schema, name )
+            );
+        }
+        else {
+            return cached.iterator();
+        }
+    }
 
-		public boolean hasNext() {			
-			return realIterator.hasNext();
-		}
+    public Iterator getTables(String catalog, String schema, String table) {
+        StringKey sk = new StringKey( new String[] { catalog, schema, table } );
+        List cached = (List) cachedTables.get( sk );
+        if ( cached == null ) {
+            cached = new ArrayList();
+            return new CachedIterator( this, cachedTables, sk, cached, delegate.getTables( catalog, schema, table ) );
+        }
+        else {
+            return cached.iterator();
+        }
+    }
 
-		public Object next() {
-			Map map = (Map) realIterator.next();
-			cache.add(new HashMap(map)); // need to copy since MetaDataDialect might reuse it.
-			return map;
-		}
+    public Iterator getSuggestedPrimaryKeyStrategyName(String catalog, String schema, String table) {
+        StringKey sk = new StringKey( new String[] { catalog, schema, table } );
+        List cached = (List) cachedPrimaryKeyStrategyName.get( sk );
+        if ( cached == null ) {
+            cached = new ArrayList();
+            return new CachedIterator(
+                    this,
+                    cachedPrimaryKeyStrategyName,
+                    sk,
+                    cached,
+                    delegate.getSuggestedPrimaryKeyStrategyName( catalog, schema, table )
+            );
+        }
+        else {
+            return cached.iterator();
+        }
+    }
 
-		public void remove() {
-			realIterator.remove();
-		}
+    public boolean needQuote(String name) {
+        return delegate.needQuote( name );
+    }
 
-		public void store() {
-			destination.put( target, cache );
-			if(realIterator.hasNext()) throw new IllegalStateException("CachedMetaDataDialect have not been fully initialized!");
-			cache = null;
-			target = null;
-			destination = null;
-			realIterator = null;			
-		}
-	}
+    private static class StringKey {
+        String[] keys;
 
-	
+        StringKey(String[] key) {
+            this.keys = key;
+        }
 
-		
+        public int hashCode() {
+            if ( keys == null ) {
+                return 0;
+            }
+
+            int result = 1;
+
+            for ( int i = 0; i < keys.length; i++ ) {
+                Object element = keys[i];
+                result = 31 * result + ( element == null ? 0 : element.hashCode() );
+            }
+
+            return result;
+        }
+
+        public boolean equals(Object obj) {
+            StringKey other = (StringKey) obj;
+            String[] otherKeys = other.keys;
+
+            if ( otherKeys.length != keys.length ) {
+                return false;
+            }
+
+            for ( int i = otherKeys.length - 1; i >= 0; i-- ) {
+                if ( !safeEquals( otherKeys[i], ( keys[i] ) ) ) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private boolean safeEquals(Object obj1, Object obj2) {
+            if ( obj1 == null ) {
+                return obj2 == null;
+            }
+            return obj1.equals( obj2 );
+        }
+    }
+
+    private static class CachedIterator implements Iterator {
+
+        private List cache;
+        private StringKey target;
+        private Map destination;
+        private Iterator realIterator;
+        final CachedMetaDataDialect owner;
+
+        public CachedIterator(CachedMetaDataDialect owner, Map destination, StringKey sk, List cache, Iterator realIterator) {
+            this.owner = owner;
+            this.destination = destination;
+            this.target = sk;
+            this.realIterator = realIterator;
+            this.cache = cache;
+        }
+
+        public CachedMetaDataDialect getOwner() {
+            return owner;
+        }
+
+        public boolean hasNext() {
+            return realIterator.hasNext();
+        }
+
+        public Object next() {
+            Map map = (Map) realIterator.next();
+            cache.add( new HashMap( map ) ); // need to copy since MetaDataDialect might reuse it.
+            return map;
+        }
+
+        public void remove() {
+            realIterator.remove();
+        }
+
+        public void store() {
+            destination.put( target, cache );
+            if ( realIterator.hasNext() ) {
+                throw new IllegalStateException( "CachedMetaDataDialect have not been fully initialized!" );
+            }
+            cache = null;
+            target = null;
+            destination = null;
+            realIterator = null;
+        }
+    }
+
+
 }

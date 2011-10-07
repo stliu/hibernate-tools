@@ -1,7 +1,31 @@
 <?xml version="1.0"?>
-<!DOCTYPE hibernate-mapping PUBLIC 
-	"-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-	"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!--
+  ~ Hibernate, Relational Persistence for Idiomatic Java
+  ~
+  ~ Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+  ~ indicated by the @author tags or express copyright attribution
+  ~ statements applied by the authors.  All third-party contributions are
+  ~ distributed under license by Red Hat Inc.
+  ~
+  ~ This copyrighted material is made available to anyone wishing to use, modify,
+  ~ copy, or redistribute it subject to the terms and conditions of the GNU
+  ~ Lesser General Public License, as published by the Free Software Foundation.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  ~ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this distribution; if not, write to:
+  ~ Free Software Foundation, Inc.
+  ~ 51 Franklin Street, Fifth Floor
+  ~ Boston, MA  02110-1301  USA
+  -->
+
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <!-- 
 
@@ -9,32 +33,32 @@
      
 -->
 
-<hibernate-mapping package="org.hibernate.tool.hbm2x"> 
-    <class name="UPerson" abstract="true"> 
-        <cache usage="read-write" /> 
-        <id name="id" type="long"> 
-            <column name="PERSON_ID"> 
-                <comment>the primary key for hibernate</comment> 
-            </column> 
-            <generator class="sequence"> 
-                <param name="sequence">PERSON_SEQ</param> 
-            </generator> 
-        </id> 
-         
-        <property name="firstName" type="string"> 
-            <column name="FIRST_NAME" length="50" not-null="true"> 
-                <comment>the first name</comment> 
-            </column> 
-        </property> 
+<hibernate-mapping package="org.hibernate.tool.hbm2x">
+    <class name="UPerson" abstract="true">
+        <cache usage="read-write"/>
+        <id name="id" type="long">
+            <column name="PERSON_ID">
+                <comment>the primary key for hibernate</comment>
+            </column>
+            <generator class="sequence">
+                <param name="sequence">PERSON_SEQ</param>
+            </generator>
+        </id>
 
-        <union-subclass name="UUser" table="CROWN_USERS" schema="CROWN" lazy="false"> 
-            <comment>Table of crown users</comment> 
-            <property name="userName" type="string"> 
-                <column name="USER_NAME" length="15" not-null="true" unique="true"> 
-                    <comment>the unique user id</comment> 
-                </column> 
-            </property> 
-        </union-subclass> 
-     </class>
+        <property name="firstName" type="string">
+            <column name="FIRST_NAME" length="50" not-null="true">
+                <comment>the first name</comment>
+            </column>
+        </property>
+
+        <union-subclass name="UUser" table="CROWN_USERS" schema="CROWN" lazy="false">
+            <comment>Table of crown users</comment>
+            <property name="userName" type="string">
+                <column name="USER_NAME" length="15" not-null="true" unique="true">
+                    <comment>the unique user id</comment>
+                </column>
+            </property>
+        </union-subclass>
+    </class>
 </hibernate-mapping>
 

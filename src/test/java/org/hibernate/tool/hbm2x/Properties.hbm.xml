@@ -1,7 +1,31 @@
 <?xml version="1.0"?>
-<!DOCTYPE hibernate-mapping PUBLIC 
-	"-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-	"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!--
+  ~ Hibernate, Relational Persistence for Idiomatic Java
+  ~
+  ~ Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+  ~ indicated by the @author tags or express copyright attribution
+  ~ statements applied by the authors.  All third-party contributions are
+  ~ distributed under license by Red Hat Inc.
+  ~
+  ~ This copyrighted material is made available to anyone wishing to use, modify,
+  ~ copy, or redistribute it subject to the terms and conditions of the GNU
+  ~ Lesser General Public License, as published by the Free Software Foundation.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  ~ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this distribution; if not, write to:
+  ~ Free Software Foundation, Inc.
+  ~ 51 Franklin Street, Fifth Floor
+  ~ Boston, MA  02110-1301  USA
+  -->
+
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <!-- 
 
@@ -12,40 +36,40 @@
 <hibernate-mapping package="properties">
 
     <class name="PPerson">
-    	<id name="id" type="string">
-    		<generator class="native"/>
-    	</id>
+        <id name="id" type="string">
+            <generator class="native"/>
+        </id>
 
-    	<property name="name" type="string" not-null="true"/>
-    	
-    	<properties name="emergencyContact" unique="true">
-    		<property name="contact" type="boolean" not-null="true"/>
-    		<many-to-one name="company" class="PCompany"/>
-    	</properties>
+        <property name="name" type="string" not-null="true"/>
+
+        <properties name="emergencyContact" unique="true">
+            <property name="contact" type="boolean" not-null="true"/>
+            <many-to-one name="company" class="PCompany"/>
+        </properties>
     </class>
-    	
+
     <class name="PCompany">
-    	<id name="id" type="string">
-    		<generator class="native"/>
-    	</id>
+        <id name="id" type="string">
+            <generator class="native"/>
+        </id>
 
-    	<property name="brand" type="string" not-null="true"/>
-    	
-    	<set name="employees" inverse="true">
-    	  <key>
-    	    <column name="company_id"/>
-    	  </key>
-    	  <one-to-many class="PPerson"/>
-    	</set>
-    	
-<!-- 	<one-to-one name="emergencyContact" class="Person"
-		property-ref="emergencyContact">
-		<formula>'true'</formula>
-		<formula>id</formula>
-	</one-to-one> -->
+        <property name="brand" type="string" not-null="true"/>
+
+        <set name="employees" inverse="true">
+            <key>
+                <column name="company_id"/>
+            </key>
+            <one-to-many class="PPerson"/>
+        </set>
+
+        <!-- 	<one-to-one name="emergencyContact" class="Person"
+          property-ref="emergencyContact">
+          <formula>'true'</formula>
+          <formula>id</formula>
+      </one-to-one> -->
 
     </class>
-    
+
 </hibernate-mapping>
 
 

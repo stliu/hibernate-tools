@@ -1,3 +1,27 @@
+/*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
 package org.hibernate.cfg.reveng;
 
 import java.util.List;
@@ -9,149 +33,214 @@ import org.hibernate.mapping.Table;
 
 public class DelegatingReverseEngineeringStrategy implements ReverseEngineeringStrategy {
 
-	ReverseEngineeringStrategy delegate;
+    ReverseEngineeringStrategy delegate;
 
-	public List getForeignKeys(TableIdentifier referencedTable) {
-		return delegate==null?null:delegate.getForeignKeys(referencedTable);
-	}
+    public List getForeignKeys(TableIdentifier referencedTable) {
+        return delegate == null ? null : delegate.getForeignKeys( referencedTable );
+    }
 
-	public DelegatingReverseEngineeringStrategy(ReverseEngineeringStrategy delegate) {
-		this.delegate = delegate;
-	}
+    public DelegatingReverseEngineeringStrategy(ReverseEngineeringStrategy delegate) {
+        this.delegate = delegate;
+    }
 
-	public String columnToPropertyName(TableIdentifier table, String column) {
-		return delegate==null?null:delegate.columnToPropertyName(table, column);
-	}
+    public String columnToPropertyName(TableIdentifier table, String column) {
+        return delegate == null ? null : delegate.columnToPropertyName( table, column );
+    }
 
-	public boolean excludeTable(TableIdentifier ti) {
-		return delegate==null?false:delegate.excludeTable(ti);
-	}
-	
-	public boolean excludeColumn(TableIdentifier identifier, String columnName) {
-		return delegate==null?false:delegate.excludeColumn(identifier, columnName);
-	}
+    public boolean excludeTable(TableIdentifier ti) {
+        return delegate == null ? false : delegate.excludeTable( ti );
+    }
 
-	public String foreignKeyToCollectionName(String keyname, TableIdentifier fromTable, List fromColumns, TableIdentifier referencedTable, List referencedColumns, boolean uniqueReference) {
-		return delegate==null?null:delegate.foreignKeyToCollectionName(keyname, fromTable, fromColumns, referencedTable, referencedColumns, uniqueReference);
-	}
+    public boolean excludeColumn(TableIdentifier identifier, String columnName) {
+        return delegate == null ? false : delegate.excludeColumn( identifier, columnName );
+    }
 
-	public String foreignKeyToEntityName(String keyname, TableIdentifier fromTable, List fromColumnNames, TableIdentifier referencedTable, List referencedColumnNames, boolean uniqueReference) {
-		return delegate==null?null:delegate.foreignKeyToEntityName(keyname, fromTable, fromColumnNames, referencedTable, referencedColumnNames, uniqueReference);
-	}
+    public String foreignKeyToCollectionName(String keyname, TableIdentifier fromTable, List fromColumns, TableIdentifier referencedTable, List referencedColumns, boolean uniqueReference) {
+        return delegate == null ? null : delegate.foreignKeyToCollectionName(
+                keyname,
+                fromTable,
+                fromColumns,
+                referencedTable,
+                referencedColumns,
+                uniqueReference
+        );
+    }
 
-	public String columnToHibernateTypeName(TableIdentifier table, String columnName, int sqlType, int length, int precision, int scale, boolean nullable, boolean generatedIdentifier) {
-		return delegate==null?null:delegate.columnToHibernateTypeName(table, columnName, sqlType, length, precision, scale, nullable, generatedIdentifier);
-	}
+    public String foreignKeyToEntityName(String keyname, TableIdentifier fromTable, List fromColumnNames, TableIdentifier referencedTable, List referencedColumnNames, boolean uniqueReference) {
+        return delegate == null ? null : delegate.foreignKeyToEntityName(
+                keyname,
+                fromTable,
+                fromColumnNames,
+                referencedTable,
+                referencedColumnNames,
+                uniqueReference
+        );
+    }
 
-	public String tableToClassName(TableIdentifier tableIdentifier) {
-		return delegate==null?null:delegate.tableToClassName(tableIdentifier);
-	}
+    public String columnToHibernateTypeName(TableIdentifier table, String columnName, int sqlType, int length, int precision, int scale, boolean nullable, boolean generatedIdentifier) {
+        return delegate == null ? null : delegate.columnToHibernateTypeName(
+                table,
+                columnName,
+                sqlType,
+                length,
+                precision,
+                scale,
+                nullable,
+                generatedIdentifier
+        );
+    }
 
-	public String getTableIdentifierStrategyName(TableIdentifier tableIdentifier) {
-		return delegate==null?null:delegate.getTableIdentifierStrategyName(tableIdentifier);
-	}
+    public String tableToClassName(TableIdentifier tableIdentifier) {
+        return delegate == null ? null : delegate.tableToClassName( tableIdentifier );
+    }
 
-	public Properties getTableIdentifierProperties(TableIdentifier identifier) {
-		return delegate==null?null:delegate.getTableIdentifierProperties(identifier);
-	}
+    public String getTableIdentifierStrategyName(TableIdentifier tableIdentifier) {
+        return delegate == null ? null : delegate.getTableIdentifierStrategyName( tableIdentifier );
+    }
 
-	public List getPrimaryKeyColumnNames(TableIdentifier identifier) {
-		return delegate==null?null:delegate.getPrimaryKeyColumnNames(identifier);
-	}
+    public Properties getTableIdentifierProperties(TableIdentifier identifier) {
+        return delegate == null ? null : delegate.getTableIdentifierProperties( identifier );
+    }
 
-	public String classNameToCompositeIdName(String className) {
-		return delegate==null?null:delegate.classNameToCompositeIdName(className);
-	}
+    public List getPrimaryKeyColumnNames(TableIdentifier identifier) {
+        return delegate == null ? null : delegate.getPrimaryKeyColumnNames( identifier );
+    }
 
-	public void configure(ReverseEngineeringRuntimeInfo runtimeInfo) {
-		if(delegate!=null) delegate.configure(runtimeInfo);		
-	}
+    public String classNameToCompositeIdName(String className) {
+        return delegate == null ? null : delegate.classNameToCompositeIdName( className );
+    }
 
-	public void close() {
-		if(delegate!=null) delegate.close();
-	}
+    public void configure(ReverseEngineeringRuntimeInfo runtimeInfo) {
+        if ( delegate != null ) {
+            delegate.configure( runtimeInfo );
+        }
+    }
 
-	public String getOptimisticLockColumnName(TableIdentifier identifier) {
-		return delegate==null?null:delegate.getOptimisticLockColumnName(identifier);		
-	}
+    public void close() {
+        if ( delegate != null ) {
+            delegate.close();
+        }
+    }
 
-	public boolean useColumnForOptimisticLock(TableIdentifier identifier, String column) {
-		return delegate==null?false:delegate.useColumnForOptimisticLock(identifier, column);
-	}
+    public String getOptimisticLockColumnName(TableIdentifier identifier) {
+        return delegate == null ? null : delegate.getOptimisticLockColumnName( identifier );
+    }
 
-	public List getSchemaSelections() {
-		return delegate==null?null:delegate.getSchemaSelections();
-	}
+    public boolean useColumnForOptimisticLock(TableIdentifier identifier, String column) {
+        return delegate == null ? false : delegate.useColumnForOptimisticLock( identifier, column );
+    }
 
-	public String tableToIdentifierPropertyName(TableIdentifier tableIdentifier) {
-		return delegate==null?null:delegate.tableToIdentifierPropertyName(tableIdentifier);
-	}
+    public List getSchemaSelections() {
+        return delegate == null ? null : delegate.getSchemaSelections();
+    }
 
-	public String tableToCompositeIdName(TableIdentifier identifier) {
-		return delegate==null?null:delegate.tableToCompositeIdName(identifier);
-	}
+    public String tableToIdentifierPropertyName(TableIdentifier tableIdentifier) {
+        return delegate == null ? null : delegate.tableToIdentifierPropertyName( tableIdentifier );
+    }
 
-	public boolean excludeForeignKeyAsCollection(String keyname, TableIdentifier fromTable, List fromColumns, TableIdentifier referencedTable, List referencedColumns) {
-		return delegate==null?false:delegate.excludeForeignKeyAsCollection(keyname, fromTable, fromColumns, referencedTable, referencedColumns);
-	}
+    public String tableToCompositeIdName(TableIdentifier identifier) {
+        return delegate == null ? null : delegate.tableToCompositeIdName( identifier );
+    }
 
-	public boolean excludeForeignKeyAsManytoOne(String keyname, TableIdentifier fromTable, List fromColumns, TableIdentifier referencedTable, List referencedColumns) {
-		return delegate==null?false:delegate.excludeForeignKeyAsManytoOne(keyname, fromTable, fromColumns, referencedTable, referencedColumns);
-	}
+    public boolean excludeForeignKeyAsCollection(String keyname, TableIdentifier fromTable, List fromColumns, TableIdentifier referencedTable, List referencedColumns) {
+        return delegate == null ? false : delegate.excludeForeignKeyAsCollection(
+                keyname,
+                fromTable,
+                fromColumns,
+                referencedTable,
+                referencedColumns
+        );
+    }
 
-	public boolean isForeignKeyCollectionInverse(String name, TableIdentifier foreignKeyTable, List columns, TableIdentifier foreignKeyReferencedTable, List referencedColumns) {
-		return delegate==null?true:delegate.isForeignKeyCollectionInverse(name, foreignKeyTable, columns, foreignKeyReferencedTable, referencedColumns);
-	}
+    public boolean excludeForeignKeyAsManytoOne(String keyname, TableIdentifier fromTable, List fromColumns, TableIdentifier referencedTable, List referencedColumns) {
+        return delegate == null ? false : delegate.excludeForeignKeyAsManytoOne(
+                keyname,
+                fromTable,
+                fromColumns,
+                referencedTable,
+                referencedColumns
+        );
+    }
 
-	public boolean isForeignKeyCollectionLazy(String name, TableIdentifier foreignKeyTable, List columns, TableIdentifier foreignKeyReferencedTable, List referencedColumns) {
-		return delegate==null?true:delegate.isForeignKeyCollectionLazy(name, foreignKeyTable, columns, foreignKeyReferencedTable, referencedColumns);
-	}
+    public boolean isForeignKeyCollectionInverse(String name, TableIdentifier foreignKeyTable, List columns, TableIdentifier foreignKeyReferencedTable, List referencedColumns) {
+        return delegate == null ? true : delegate.isForeignKeyCollectionInverse(
+                name,
+                foreignKeyTable,
+                columns,
+                foreignKeyReferencedTable,
+                referencedColumns
+        );
+    }
 
-	/**
-	 * Initialize the settings. 
-	 * 
-	 * If subclasses need to use the Settings then it should keep its own reference, but still remember to initialize the delegates settings by calling super.setSettings(settings).
-	 * 
-	 * @see ReverseEngineeringStrategy.setSettings
-	 */
-	public void setSettings(ReverseEngineeringSettings settings) {
-		if(delegate!=null) delegate.setSettings(settings);
-	}
+    public boolean isForeignKeyCollectionLazy(String name, TableIdentifier foreignKeyTable, List columns, TableIdentifier foreignKeyReferencedTable, List referencedColumns) {
+        return delegate == null ? true : delegate.isForeignKeyCollectionLazy(
+                name,
+                foreignKeyTable,
+                columns,
+                foreignKeyReferencedTable,
+                referencedColumns
+        );
+    }
 
-	public boolean isManyToManyTable(Table table) {
-		return delegate==null?true:delegate.isManyToManyTable( table );
-	}
-	
-	public boolean isOneToOne(ForeignKey foreignKey) { 
-		return delegate==null?true:delegate.isOneToOne( foreignKey );
+    /**
+     * Initialize the settings.
+     *
+     * If subclasses need to use the Settings then it should keep its own reference, but still remember to initialize the delegates settings by calling super.setSettings(settings).
+     *
+     * @see ReverseEngineeringStrategy.setSettings
+     */
+    public void setSettings(ReverseEngineeringSettings settings) {
+        if ( delegate != null ) {
+            delegate.setSettings( settings );
+        }
+    }
+
+    public boolean isManyToManyTable(Table table) {
+        return delegate == null ? true : delegate.isManyToManyTable( table );
+    }
+
+    public boolean isOneToOne(ForeignKey foreignKey) {
+        return delegate == null ? true : delegate.isOneToOne( foreignKey );
     }
 
 
-	public String foreignKeyToManyToManyName(ForeignKey fromKey, TableIdentifier middleTable, ForeignKey toKey, boolean uniqueReference) {
-		return delegate==null?null:delegate.foreignKeyToManyToManyName( fromKey, middleTable, toKey, uniqueReference );
-	}
+    public String foreignKeyToManyToManyName(ForeignKey fromKey, TableIdentifier middleTable, ForeignKey toKey, boolean uniqueReference) {
+        return delegate == null ? null : delegate.foreignKeyToManyToManyName(
+                fromKey,
+                middleTable,
+                toKey,
+                uniqueReference
+        );
+    }
 
-	public Map tableToMetaAttributes(TableIdentifier tableIdentifier) {
-		return delegate==null?null:delegate.tableToMetaAttributes( tableIdentifier );		
-	}
+    public Map tableToMetaAttributes(TableIdentifier tableIdentifier) {
+        return delegate == null ? null : delegate.tableToMetaAttributes( tableIdentifier );
+    }
 
-	public Map columnToMetaAttributes(TableIdentifier identifier, String column) {
-		return delegate==null?null:delegate.columnToMetaAttributes( identifier, column );
-	}
+    public Map columnToMetaAttributes(TableIdentifier identifier, String column) {
+        return delegate == null ? null : delegate.columnToMetaAttributes( identifier, column );
+    }
 
-	public AssociationInfo foreignKeyToAssociationInfo(ForeignKey foreignKey) {
-		return delegate==null?null:delegate.foreignKeyToAssociationInfo(foreignKey);
-	}
-	
-	public AssociationInfo foreignKeyToInverseAssociationInfo(ForeignKey foreignKey) {
-		return delegate==null?null:delegate.foreignKeyToInverseAssociationInfo(foreignKey);
-	}
-	
-	public String foreignKeyToInverseEntityName(String keyname,
-			TableIdentifier fromTable, List fromColumnNames,
-			TableIdentifier referencedTable, List referencedColumnNames,
-			boolean uniqueReference) {
-		return delegate==null?null:delegate.foreignKeyToInverseEntityName(keyname, fromTable, fromColumnNames, referencedTable, referencedColumnNames, uniqueReference);
-	}	
-	
+    public AssociationInfo foreignKeyToAssociationInfo(ForeignKey foreignKey) {
+        return delegate == null ? null : delegate.foreignKeyToAssociationInfo( foreignKey );
+    }
+
+    public AssociationInfo foreignKeyToInverseAssociationInfo(ForeignKey foreignKey) {
+        return delegate == null ? null : delegate.foreignKeyToInverseAssociationInfo( foreignKey );
+    }
+
+    public String foreignKeyToInverseEntityName(String keyname,
+                                                TableIdentifier fromTable, List fromColumnNames,
+                                                TableIdentifier referencedTable, List referencedColumnNames,
+                                                boolean uniqueReference) {
+        return delegate == null ? null : delegate.foreignKeyToInverseEntityName(
+                keyname,
+                fromTable,
+                fromColumnNames,
+                referencedTable,
+                referencedColumnNames,
+                uniqueReference
+        );
+    }
+
 }

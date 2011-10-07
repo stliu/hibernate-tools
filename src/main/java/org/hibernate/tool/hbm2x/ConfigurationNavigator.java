@@ -1,4 +1,28 @@
 /*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
+/*
  * Created on 2004-12-01
  */
 package org.hibernate.tool.hbm2x;
@@ -23,98 +47,100 @@ import org.hibernate.tool.hbm2x.pojo.POJOClass;
  */
 public class ConfigurationNavigator {
 
-	private static final Log log = LogFactory.getLog(POJOExporter.class);
-	
-	/**
-	 * @param cfg
-	 * @param exporter
-	 * @param file
-	 */
-	public void export(Configuration cfg, ConfigurationVisitor exporter) {
+    private static final Log log = LogFactory.getLog( POJOExporter.class );
 
-		Map components = new HashMap();
-		
-		for (Iterator classes = cfg.getClassMappings(); classes.hasNext(); ) {
-		    if(exporter.startMapping(cfg) ) {
-		        PersistentClass clazz = (PersistentClass) classes.next();
-		        collectComponents(components,clazz);
-		        
-		        if(exporter.startPersistentClass(clazz) ) {
-		            if(clazz.hasIdentifierProperty() ) {
-		                exporter.startIdentifierProperty(clazz.getIdentifierProperty() );
-		                exporter.endIdentifierProperty(clazz.getIdentifierProperty() );
-		            } 
-		            else if (clazz.hasEmbeddedIdentifier() ) {
-						exporter.startEmbeddedIdentifier( (Component)clazz.getKey() );
-						exporter.endEmbeddedIdentifier( (Component)clazz.getKey() );
-		            }
-		            Iterator unjoinedPropertyIterator = clazz.getUnjoinedPropertyIterator();
-		            while(unjoinedPropertyIterator.hasNext() ) {
-		                Property prop = (Property)unjoinedPropertyIterator.next();
-		                exporter.startProperty(prop);
-		                exporter.endProperty(prop);
-		            }
-		        } 
-		        exporter.endPersistentClass(clazz);
-		    } 
-		    else {
-		        exporter.endMapping(cfg);
-		    }
-		}
-		
-		for(Iterator comps = components.values().iterator(); comps.hasNext(); ) {
-			Component component = (Component)comps.next();
-			exporter.startComponent(component);
-		}
-		
-		if (exporter.startGeneralConfiguration(cfg) )
-			exporter.endGeneralConfiguration(cfg);
+    /**
+     * @param cfg
+     * @param exporter
+     * @param file
+     */
+    public void export(Configuration cfg, ConfigurationVisitor exporter) {
 
-	}
+        Map components = new HashMap();
 
-	/**
-	 * @param clazz
-	 */
-	public static void collectComponents(Map components, PersistentClass clazz) {
-		Iterator iter = new Cfg2JavaTool().getPOJOClass(clazz).getAllPropertiesIterator();
-		collectComponents( components, iter );		
-	}
+        for ( Iterator classes = cfg.getClassMappings(); classes.hasNext(); ) {
+            if ( exporter.startMapping( cfg ) ) {
+                PersistentClass clazz = (PersistentClass) classes.next();
+                collectComponents( components, clazz );
 
-	public static void collectComponents(Map components, POJOClass clazz) {
-		Iterator iter = clazz.getAllPropertiesIterator();
-		collectComponents( components, iter );		
-	}
-	
-	private static void collectComponents(Map components, Iterator iter) {
-		while(iter.hasNext()) {
-			Property property = (Property) iter.next();
-			if (!"embedded".equals(property.getPropertyAccessorName()) && // HBX-267, embedded property for <properties> should not be generated as component. 
-				property.getValue() instanceof Component) {
-				Component comp = (Component) property.getValue();
-				addComponent( components, comp );			
-			} 
-			else if (property.getValue() instanceof Collection) {
-				// compisite-element in collection
-				Collection collection = (Collection) property.getValue();				
-				if ( collection.getElement() instanceof Component) {
-					Component comp = (Component) collection.getElement();				
-					addComponent(components, comp);				
-				}
-			}
-		}
-	}
+                if ( exporter.startPersistentClass( clazz ) ) {
+                    if ( clazz.hasIdentifierProperty() ) {
+                        exporter.startIdentifierProperty( clazz.getIdentifierProperty() );
+                        exporter.endIdentifierProperty( clazz.getIdentifierProperty() );
+                    }
+                    else if ( clazz.hasEmbeddedIdentifier() ) {
+                        exporter.startEmbeddedIdentifier( (Component) clazz.getKey() );
+                        exporter.endEmbeddedIdentifier( (Component) clazz.getKey() );
+                    }
+                    Iterator unjoinedPropertyIterator = clazz.getUnjoinedPropertyIterator();
+                    while ( unjoinedPropertyIterator.hasNext() ) {
+                        Property prop = (Property) unjoinedPropertyIterator.next();
+                        exporter.startProperty( prop );
+                        exporter.endProperty( prop );
+                    }
+                }
+                exporter.endPersistentClass( clazz );
+            }
+            else {
+                exporter.endMapping( cfg );
+            }
+        }
 
-	private static void addComponent(Map components, Component comp) {
-		if(!comp.isDynamic()) {
-			Component existing = (Component) components.put(comp.getComponentClassName(), comp);
-			
-			if(existing!=null) {
-				log.warn("Component " + existing.getComponentClassName() + " found more than once! Will only generate the last found.");
-			}
-		} else {
-			log.debug("dynamic-component found. Ignoring it as a component, but will collect any embedded components.");
-		}	
-		collectComponents( components, new ComponentPOJOClass(comp, new Cfg2JavaTool()).getAllPropertiesIterator());		
-	}
+        for ( Iterator comps = components.values().iterator(); comps.hasNext(); ) {
+            Component component = (Component) comps.next();
+            exporter.startComponent( component );
+        }
+
+        if ( exporter.startGeneralConfiguration( cfg ) ) {
+            exporter.endGeneralConfiguration( cfg );
+        }
+
+    }
+
+    /**
+     * @param clazz
+     */
+    public static void collectComponents(Map components, PersistentClass clazz) {
+        Iterator iter = new Cfg2JavaTool().getPOJOClass( clazz ).getAllPropertiesIterator();
+        collectComponents( components, iter );
+    }
+
+    public static void collectComponents(Map components, POJOClass clazz) {
+        Iterator iter = clazz.getAllPropertiesIterator();
+        collectComponents( components, iter );
+    }
+
+    private static void collectComponents(Map components, Iterator iter) {
+        while ( iter.hasNext() ) {
+            Property property = (Property) iter.next();
+            if ( !"embedded".equals( property.getPropertyAccessorName() ) && // HBX-267, embedded property for <properties> should not be generated as component.
+                    property.getValue() instanceof Component ) {
+                Component comp = (Component) property.getValue();
+                addComponent( components, comp );
+            }
+            else if ( property.getValue() instanceof Collection ) {
+                // compisite-element in collection
+                Collection collection = (Collection) property.getValue();
+                if ( collection.getElement() instanceof Component ) {
+                    Component comp = (Component) collection.getElement();
+                    addComponent( components, comp );
+                }
+            }
+        }
+    }
+
+    private static void addComponent(Map components, Component comp) {
+        if ( !comp.isDynamic() ) {
+            Component existing = (Component) components.put( comp.getComponentClassName(), comp );
+
+            if ( existing != null ) {
+                log.warn( "Component " + existing.getComponentClassName() + " found more than once! Will only generate the last found." );
+            }
+        }
+        else {
+            log.debug( "dynamic-component found. Ignoring it as a component, but will collect any embedded components." );
+        }
+        collectComponents( components, new ComponentPOJOClass( comp, new Cfg2JavaTool() ).getAllPropertiesIterator() );
+    }
 
 }

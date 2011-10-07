@@ -1,3 +1,27 @@
+/*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
 package org.hibernate.cfg.reveng;
 
 import java.sql.Connection;
@@ -67,10 +91,10 @@ public class JDBCReader {
             getMetaDataDialect().configure( info );
             revengStrategy.configure( info );
 
-            Set hasIndices = new HashSet();
+            Set<Table> hasIndices = new HashSet<Table>();
 
-            List schemaSelectors = revengStrategy.getSchemaSelections();
-            List foundTables = new ArrayList();
+            List<SchemaSelection> schemaSelectors = revengStrategy.getSchemaSelections();
+            List<Table> foundTables = new ArrayList<Table>();
             if ( schemaSelectors == null ) {
                 foundTables.addAll(
                         processTables(
@@ -82,15 +106,14 @@ public class JDBCReader {
                 );
             }
             else {
-                for ( Iterator iter = schemaSelectors.iterator(); iter.hasNext(); ) {
-                    SchemaSelection selection = (SchemaSelection) iter.next();
+                for ( SchemaSelection selection : schemaSelectors ) {
                     foundTables.addAll( processTables( dbs, selection, hasIndices, progress ) );
                 }
             }
 
-            Iterator tables = foundTables.iterator(); // not dbs.iterateTables() to avoid "double-read" of columns etc.
+            Iterator<Table> tables = foundTables.iterator(); // not dbs.iterateTables() to avoid "double-read" of columns etc.
             while ( tables.hasNext() ) {
-                Table table = (Table) tables.next();
+                Table table = tables.next();
                 processBasicColumns( table, progress );
                 processPrimaryKey( dbs, table );
                 if ( hasIndices.contains( table ) ) {
@@ -113,15 +136,9 @@ public class JDBCReader {
 
     /**
      * Iterates the tables and find all the foreignkeys that refers to something that is available inside the DatabaseCollector.
-     *
-     * @param dbs
-     * @param progress
-     * @param tables
-     *
-     * @return
      */
     private Map resolveForeignKeys(DatabaseCollector dbs, Iterator tables, ProgressListener progress) {
-        List fks = new ArrayList();
+        List<ForeignKeysInfo> fks = new ArrayList<ForeignKeysInfo>();
         while ( tables.hasNext() ) {
             Table table = (Table) tables.next();
             // Done here after the basic process of collections as we might not have touched
@@ -133,11 +150,11 @@ public class JDBCReader {
         }
 
         Map oneToManyCandidates = new HashMap();
-        for ( Iterator iter = fks.iterator(); iter.hasNext(); ) {
-            ForeignKeysInfo element = (ForeignKeysInfo) iter.next();
+        for ( ForeignKeysInfo element : fks ) {
             Map map = element.process( revengStrategy ); // the actual foreignkey is created here.
             mergeMultiMap( oneToManyCandidates, map );
         }
+
         return oneToManyCandidates;
     }
 
@@ -522,10 +539,10 @@ public class JDBCReader {
         return value.equals( tf );
     }
 
-    private Collection processTables(DatabaseCollector dbs, SchemaSelection schemaSelection, Set hasIndices, ProgressListener progress) {
-        Map tableRs = null;
-        Iterator tableIterator = null;
-        List tables = new ArrayList();
+    private Collection<Table> processTables(DatabaseCollector dbs, SchemaSelection schemaSelection, Set<Table> hasIndices, ProgressListener progress) {
+        Map<String, String> tableRs = null;
+        Iterator<Map<String, String>> tableIterator = null;
+        List<Map<String, String>> tables = new ArrayList<Map<String, String>>();
         boolean multiSchema = false; // TODO: the code below detects if the reveng is multischema'ed, but not used for anything yet. should be used to remove schema/catalog info from output if only one schema/catalog used.
 
         try {
@@ -540,10 +557,10 @@ public class JDBCReader {
             String[] foundQualifier = new String[2];
 
             while ( tableIterator.hasNext() ) {
-                tableRs = (Map) tableIterator.next();
-                String tableName = (String) tableRs.get( "TABLE_NAME" );
-                String schemaName = (String) tableRs.get( "TABLE_SCHEM" );
-                String catalogName = (String) tableRs.get( "TABLE_CAT" );
+                tableRs = tableIterator.next();
+                String tableName = tableRs.get( "TABLE_NAME" );
+                String schemaName = tableRs.get( "TABLE_SCHEM" );
+                String catalogName = tableRs.get( "TABLE_CAT" );
 
                 TableIdentifier ti = new TableIdentifier( catalogName, schemaName, tableName );
                 if ( revengStrategy.excludeTable( ti ) ) {
@@ -580,13 +597,13 @@ public class JDBCReader {
             }
         }
 
-        List processedTables = new ArrayList();
+        List<Table> processedTables = new ArrayList<Table>();
         tableIterator = tables.iterator();
         while ( tableIterator.hasNext() ) {
-            tableRs = (Map) tableIterator.next();
-            String tableName = (String) tableRs.get( "TABLE_NAME" );
-            String schemaName = (String) tableRs.get( "TABLE_SCHEM" );
-            String catalogName = (String) tableRs.get( "TABLE_CAT" );
+            tableRs = tableIterator.next();
+            String tableName = tableRs.get( "TABLE_NAME" );
+            String schemaName = tableRs.get( "TABLE_SCHEM" );
+            String catalogName = tableRs.get( "TABLE_CAT" );
 
             /*TableIdentifier ti = new TableIdentifier(catalogName, schemaName, tableName);
                   if(revengStrategy.excludeTable(ti) ) {
@@ -594,8 +611,8 @@ public class JDBCReader {
                   continue;
                   }*/
 
-            String comment = (String) tableRs.get( "REMARKS" );
-            String tableType = (String) tableRs.get( "TABLE_TYPE" );
+            String comment = tableRs.get( "REMARKS" );
+            String tableType = tableRs.get( "TABLE_TYPE" );
 
             if ( dbs.getTable( schemaName, catalogName, tableName ) != null ) {
                 log.debug( "Ignoring " + tableName + " since it has already been processed" );
@@ -613,7 +630,8 @@ public class JDBCReader {
                     if ( catalogName != null && catalogName.trim().length() == 0 ) {
                         catalogName = null;
                     }
-                    log.debug( "Adding table " + tableName + " of type " + tableType );
+                    String quality = Table.qualify( catalogName, schemaName, tableName );
+                    log.debug( "Adding table " + quality + " of type " + tableType );
                     progress.startSubTask( "Found " + tableName );
                     Table table = dbs.addTable(
                             getSchemaForModel( schemaName ),
@@ -761,12 +779,6 @@ public class JDBCReader {
         return metadataDialect;
     }
 
-
-    /**
-     * @param size
-     *
-     * @return
-     */
     private boolean intBounds(int size) {
         return size >= 0 && size != Integer.MAX_VALUE;
     }

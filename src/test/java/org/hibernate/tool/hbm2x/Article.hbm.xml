@@ -1,7 +1,31 @@
 <?xml version="1.0"?>
-<!DOCTYPE hibernate-mapping PUBLIC 
-	"-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-	"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!--
+  ~ Hibernate, Relational Persistence for Idiomatic Java
+  ~
+  ~ Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+  ~ indicated by the @author tags or express copyright attribution
+  ~ statements applied by the authors.  All third-party contributions are
+  ~ distributed under license by Red Hat Inc.
+  ~
+  ~ This copyrighted material is made available to anyone wishing to use, modify,
+  ~ copy, or redistribute it subject to the terms and conditions of the GNU
+  ~ Lesser General Public License, as published by the Free Software Foundation.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  ~ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this distribution; if not, write to:
+  ~ Free Software Foundation, Inc.
+  ~ 51 Franklin Street, Fifth Floor
+  ~ Boston, MA  02110-1301  USA
+  -->
+
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <!-- 
 
@@ -15,76 +39,76 @@
 <hibernate-mapping package="org.hibernate.tool.hbm2x">
 
     <class name="Article">
-    
-    	<id name="articleId"
-    		length="20" type="string">
-    		<generator class="assigned"/>
-    	</id>
-		
-		<natural-id>
-    		<property name="name" type="string" not-null="true" length="100"/>
-    	</natural-id>
-    	<property name="content" type="string" not-null="true" length="10000">
-    		<meta attribute="default-value">"what can I say"</meta>
-    	</property>
 
-		<many-to-one
-		    name="author"
-            class="org.hibernate.tool.hbm2x.Author"
-            cascade="none"
-            outer-join="auto"
-            update="true"
-            insert="true"
-            access="property"
-            column="authorId" />
-		
+        <id name="articleId"
+            length="20" type="string">
+            <generator class="assigned"/>
+        </id>
+
+        <natural-id>
+            <property name="name" type="string" not-null="true" length="100"/>
+        </natural-id>
+        <property name="content" type="string" not-null="true" length="10000">
+            <meta attribute="default-value">"what can I say"</meta>
+        </property>
+
+        <many-to-one
+                name="author"
+                class="org.hibernate.tool.hbm2x.Author"
+                cascade="none"
+                outer-join="auto"
+                update="true"
+                insert="true"
+                access="property"
+                column="authorId"/>
+
         <bag name="bagarticles"
-    		inverse="true"
-    		cascade="save-update">
-    		<meta attribute="property-type">java.util.List</meta>
-    		<key column="authorId"/>
-    		<one-to-many class="Article"/>
-    	</bag>
-    	
-    	 <bag name="bagstrings">
-    		
-    		<key column="authorId"/>
-    		
-    		<element type="string"/>
-    	</bag>
+             inverse="true"
+             cascade="save-update">
+            <meta attribute="property-type">java.util.List</meta>
+            <key column="authorId"/>
+            <one-to-many class="Article"/>
+        </bag>
 
-    	 <map name="AMap">
-		  <key column="idx"/>
-		  <index type="string"/>
-		  <one-to-many class="Article"/>
-		</map>
-		
-		<list name="aList">
-		  <key column="idx"/>
-		  <list-index/>
-		  <one-to-many class="Article"/>		
-		</list>
+        <bag name="bagstrings">
 
-		<set name="sortedArticlesSet" inverse="true"
-			sort="comparator.NoopComparator">
-			<key column="idx"/>
-			<one-to-many class="Article" />
-		</set>
-		
-		<map name="sortedArticlesMap" inverse="true"
-			sort="comparator.NoopComparator">
-			<key column="idx"/>
-			<map-key type="string"/>
-			<one-to-many class="Article" />
-		</map>
-		
-		<map name="naturalSortedArticlesMap" inverse="true"
-			sort="natural">
-			<key column="idx"/>
-			<map-key type="string"/>
-			<one-to-many class="Article" />
-		</map>
-		
+            <key column="authorId"/>
+
+            <element type="string"/>
+        </bag>
+
+        <map name="AMap">
+            <key column="idx"/>
+            <index type="string"/>
+            <one-to-many class="Article"/>
+        </map>
+
+        <list name="aList">
+            <key column="idx"/>
+            <list-index/>
+            <one-to-many class="Article"/>
+        </list>
+
+        <set name="sortedArticlesSet" inverse="true"
+             sort="comparator.NoopComparator">
+            <key column="idx"/>
+            <one-to-many class="Article"/>
+        </set>
+
+        <map name="sortedArticlesMap" inverse="true"
+             sort="comparator.NoopComparator">
+            <key column="idx"/>
+            <map-key type="string"/>
+            <one-to-many class="Article"/>
+        </map>
+
+        <map name="naturalSortedArticlesMap" inverse="true"
+             sort="natural">
+            <key column="idx"/>
+            <map-key type="string"/>
+            <one-to-many class="Article"/>
+        </map>
+
     </class>
 
 </hibernate-mapping>

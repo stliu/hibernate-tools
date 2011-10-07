@@ -1,4 +1,28 @@
 /*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
+/*
  * Created on 2004-11-24
  *
  */
@@ -12,12 +36,13 @@ import java.util.Iterator;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.JDBCMetaDataConfiguration;
 import org.hibernate.cfg.reveng.TableIdentifier;
-import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.mapping.ForeignKey;
 import org.hibernate.mapping.Table;
 
@@ -25,23 +50,10 @@ import org.hibernate.mapping.Table;
  * @author max
  */
 public abstract class JDBCMetaDataBinderTestCase extends BaseTestCase {
-
-    private Log log = LogFactory.getLog( this.getClass() );
-
-    public JDBCMetaDataBinderTestCase() {
-        super( null );
-    }
-
-    public JDBCMetaDataBinderTestCase(String output) {
-        super( null, output );
-    }
-
-    /*static*/ protected JDBCMetaDataConfiguration cfg;
-
+    private Log log = LogFactory.getLog( JDBCMetaDataBinderTestCase.class );
+    protected JDBCMetaDataConfiguration cfg;
     private static boolean storesLowerCaseIdentifiers;
-
     private static boolean storesUpperCaseIdentifiers;
-
     /**
      * should this maybe be on dialect ? *
      */
@@ -60,46 +72,22 @@ public abstract class JDBCMetaDataBinderTestCase extends BaseTestCase {
     /**
      * Tries to adjust for different behaviors on databases regarding cases on identifiers.
      * Used if you don't care about cases in comparisons.
-     *
-     * @param expected
-     * @param actual
      */
     protected void assertEqualIdentifiers(String expected, String actual) {
         Assert.assertEquals( identifier( expected ), identifier( actual ) );
     }
 
-    /**
-     * @param sqls
-     *
-     * @throws SQLException
-     */
     protected void executeDDL(String[] sqls, boolean ignoreErrors) throws SQLException {
-//		Configuration configuration = new Configuration();
-//		Settings testSettings = configuration.buildSettings();
-//
-//		if(!appliesTo( testSettings.getDialect() )) {
-//			fail("test case does not apply to " + testSettings.getDialect());
-//			return; // don't do anything to avoid crippled db
-//		}
-//
         Statement statement = null;
         Connection con = null;
         try {
-
-            con = serviceRegistry().getService( JdbcServices.class ).getConnectionProvider().getConnection();
-
+            con = jdbcServices().getConnectionProvider().getConnection();
             DatabaseMetaData metaData = con.getMetaData();
             storesLowerCaseIdentifiers = metaData.storesLowerCaseIdentifiers();
             storesUpperCaseIdentifiers = metaData.storesUpperCaseIdentifiers();
-
-
             statement = con.createStatement();
-
-
-            for ( int i = 0; i < sqls.length; i++ ) {
-                String ddlsql = sqls[i];
+            for ( String ddlsql : sqls ) {
                 log.info( "Execute: " + ddlsql );
-
                 try {
                     statement.execute( ddlsql );
                 }
@@ -119,7 +107,7 @@ public abstract class JDBCMetaDataBinderTestCase extends BaseTestCase {
             if ( statement != null ) {
                 statement.close();
             }
-            serviceRegistry().getService( JdbcServices.class ).getConnectionProvider().closeConnection( con );
+            jdbcServices().getConnectionProvider().closeConnection( con );
 
         }
     }
@@ -128,10 +116,9 @@ public abstract class JDBCMetaDataBinderTestCase extends BaseTestCase {
 
     protected abstract String[] getDropSQL();
 
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void initialize() throws Exception {
         if ( cfg == null ) { // only do if we haven't done it before - to save time!
-
             try {
                 executeDDL( getDropSQL(), true );
             }
@@ -139,57 +126,33 @@ public abstract class JDBCMetaDataBinderTestCase extends BaseTestCase {
                 System.err.println( "Error while dropping - normally ok." );
                 se.printStackTrace();
             }
-
             cfg = new JDBCMetaDataConfiguration();
             configure( cfg );
-
             String[] sqls = getCreateSQL();
-
             executeDDL( sqls, false );
-
-            cfg.readFromJDBC();
+            cfg.readFromJDBC(serviceRegistry());
         }
     }
 
-    protected void tearDown() throws Exception {
+    @After
+    public void cleanupTables() throws Exception {
         executeDDL( getDropSQL(), true );
-
-        super.tearDown();
+        cfg = null;
     }
 
-    /**
-     * @param cfg2
-     */
     protected void configure(JDBCMetaDataConfiguration configuration) {
-
-
     }
 
-    /**
-     * @param column
-     *
-     * @return
-     */
     protected String toPropertyName(String column) {
-        return cfg.getReverseEngineeringStrategy().columnToPropertyName( null, column );
+        return getJDBCMetaDataConfiguration().getReverseEngineeringStrategy().columnToPropertyName( null, column );
     }
 
-    /**
-     * @param table
-     *
-     * @return
-     */
     protected String toClassName(String table) {
-        return cfg.getReverseEngineeringStrategy().tableToClassName( new TableIdentifier( null, null, table ) );
+        return getJDBCMetaDataConfiguration().getReverseEngineeringStrategy().tableToClassName( new TableIdentifier( null, null, table ) );
     }
 
     /**
      * Return the first foreignkey with the matching name ... there actually might be multiple foreignkeys with same name, but then they point to different entitities.
-     *
-     * @param table
-     * @param fkName
-     *
-     * @return
      */
     protected ForeignKey getForeignKey(Table table, String fkName) {
         Iterator iter = table.getForeignKeyIterator();
@@ -204,13 +167,9 @@ public abstract class JDBCMetaDataBinderTestCase extends BaseTestCase {
 
     /**
      * Find the first table matching the name (without looking at schema/catalog)
-     *
-     * @param tabName
-     *
-     * @return
      */
     protected Table getTable(String tabName) {
-        return getTable( cfg, tabName );
+        return getTable( getJDBCMetaDataConfiguration(), tabName );
     }
 
     protected Table getTable(Configuration configuration, String tabName) {
@@ -245,8 +204,7 @@ public abstract class JDBCMetaDataBinderTestCase extends BaseTestCase {
         return value.equals( tf );
     }
 
-    public Configuration getConfiguration() {
+    public JDBCMetaDataConfiguration getJDBCMetaDataConfiguration() {
         return cfg;
     }
-
 }

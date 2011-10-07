@@ -1,7 +1,31 @@
 <?xml version="1.0"?>
+<!--
+  ~ Hibernate, Relational Persistence for Idiomatic Java
+  ~
+  ~ Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+  ~ indicated by the @author tags or express copyright attribution
+  ~ statements applied by the authors.  All third-party contributions are
+  ~ distributed under license by Red Hat Inc.
+  ~
+  ~ This copyrighted material is made available to anyone wishing to use, modify,
+  ~ copy, or redistribute it subject to the terms and conditions of the GNU
+  ~ Lesser General Public License, as published by the Free Software Foundation.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  ~ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this distribution; if not, write to:
+  ~ Free Software Foundation, Inc.
+  ~ 51 Franklin Street, Fifth Floor
+  ~ Boston, MA  02110-1301  USA
+  -->
+
 <!DOCTYPE hibernate-mapping PUBLIC
-	"-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-	"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.hibernate.tool.hbm2x">
 
@@ -13,17 +37,17 @@
 
         <property name="name" unique="true" type="string" not-null="true"/>
 
-		<set name="currentPassengers"
-    		inverse="true" cascade="persist,save-update">
-    		<key>
+        <set name="currentPassengers"
+             inverse="true" cascade="persist,save-update">
+            <key>
                 <column name="currentTrainCity"/>
                 <column name="currentTrainLine"/>
             </key>
             <one-to-many class="Passenger"/>
-    	</set>
+        </set>
 
         <set name="usualPassengers" table="USUAL_TRAIN" inverse="true">
-    		<key>
+            <key>
                 <column name="trainCity"/>
                 <column name="trainLine"/>
             </key>

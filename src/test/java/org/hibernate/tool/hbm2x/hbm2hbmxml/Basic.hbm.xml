@@ -1,47 +1,71 @@
 <?xml version="1.0"?>
-<!DOCTYPE hibernate-mapping PUBLIC 
-	"-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-	"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+<!--
+  ~ Hibernate, Relational Persistence for Idiomatic Java
+  ~
+  ~ Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+  ~ indicated by the @author tags or express copyright attribution
+  ~ statements applied by the authors.  All third-party contributions are
+  ~ distributed under license by Red Hat Inc.
+  ~
+  ~ This copyrighted material is made available to anyone wishing to use, modify,
+  ~ copy, or redistribute it subject to the terms and conditions of the GNU
+  ~ Lesser General Public License, as published by the Free Software Foundation.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  ~ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this distribution; if not, write to:
+  ~ Free Software Foundation, Inc.
+  ~ 51 Franklin Street, Fifth Floor
+  ~ Boston, MA  02110-1301  USA
+  -->
+
+<!DOCTYPE hibernate-mapping PUBLIC
+        "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping package="org.hibernate.tool.hbm2x.hbm2hbmxml">
-<!-- 
-  This mapping demonstrates basic attributes of the mapping document
+    <!--
+      This mapping demonstrates basic attributes of the mapping document
 
-     (1) Simple id and properties        
-     (2) Id generation with no arguments.
--->
+         (1) Simple id and properties
+         (2) Id generation with no arguments.
+    -->
     <class name="Basic" table="`bas-ic`">
         <meta attribute="class-meta" inherit="false">Basic</meta>
         <meta attribute="class-meta" inherit="false">Basic2</meta>
-    	<id name="basicId"
-    		length="10"
-    		type="string"
-			unsaved-value="null"
-    	>
-    	    <meta attribute="id-meta" inherit="false">basicId</meta>
-    		<generator class="org.hibernate.id.TableHiLoGenerator">
-    			<param name="table">uni_table</param>
-    			<param name="column">next_hi_value</param>
-    		</generator>
-    	</id>
-    	
-    	<property name="description" 
-    		not-null="true" 
-    		length="200"
-    		type="string">
-    		  <meta attribute="property-desc" inherit="false">description</meta>
-    		</property>
-    		
-    	<property name="price" length="3" type="big_decimal" />
-    	
-    	<property name="numberAvailable" type="int" column="`number-Available`"/>
-    	
-    	<set name="aSet" cascade="delete, update">
-    	 <meta attribute="set-desc">anotherone</meta>    	 
-    	 <key/>
-    	 <one-to-many class="Basic"/>
-    	</set>
-    	
-	</class>
+        <id name="basicId"
+            length="10"
+            type="string"
+            unsaved-value="null"
+                >
+            <meta attribute="id-meta" inherit="false">basicId</meta>
+            <generator class="org.hibernate.id.TableHiLoGenerator">
+                <param name="table">uni_table</param>
+                <param name="column">next_hi_value</param>
+            </generator>
+        </id>
+
+        <property name="description"
+                  not-null="true"
+                  length="200"
+                  type="string">
+            <meta attribute="property-desc" inherit="false">description</meta>
+        </property>
+
+        <property name="price" length="3" type="big_decimal"/>
+
+        <property name="numberAvailable" type="int" column="`number-Available`"/>
+
+        <set name="aSet" cascade="delete, update">
+            <meta attribute="set-desc">anotherone</meta>
+            <key/>
+            <one-to-many class="Basic"/>
+        </set>
+
+    </class>
 
 </hibernate-mapping>

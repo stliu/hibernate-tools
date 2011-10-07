@@ -1,4 +1,28 @@
 /*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
+/*
  * Created on 07-Dec-2004
  *
  */
@@ -14,6 +38,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.XPath;
 import org.dom4j.io.SAXReader;
+import org.junit.Test;
 
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.JDBCMetaDataConfiguration;
@@ -36,11 +61,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class GenerateFromJDBCTest extends JDBCMetaDataBinderTestCase {
 
-    public GenerateFromJDBCTest() {
-        super( "genfromjdbc" );
-    }
-
-
+    @Override
     protected String[] getCreateSQL() {
 
         return new String[] {
@@ -48,7 +69,7 @@ public class GenerateFromJDBCTest extends JDBCMetaDataBinderTestCase {
                 "create table child  ( childid char not null, masterref char, primary key (childid), foreign key (masterref) references master(id) )"
         };
     }
-
+    @Override
     protected String[] getDropSQL() {
 
         return new String[] {
@@ -56,7 +77,7 @@ public class GenerateFromJDBCTest extends JDBCMetaDataBinderTestCase {
                 "drop table master",
         };
     }
-
+    @Override
     protected void configure(JDBCMetaDataConfiguration cfg2configure) {
 
         DefaultReverseEngineeringStrategy configurableNamingStrategy = new DefaultReverseEngineeringStrategy();
@@ -68,31 +89,24 @@ public class GenerateFromJDBCTest extends JDBCMetaDataBinderTestCase {
         cfg2configure.setReverseEngineeringStrategy( configurableNamingStrategy );
     }
 
+    @Test
     public void testGenerateJava() throws SQLException, ClassNotFoundException {
 
-        POJOExporter exporter = new POJOExporter( cfg, serviceRegistry(), getOutputDir() );
+        POJOExporter exporter = new POJOExporter( getJDBCMetaDataConfiguration(), serviceRegistry(), getOutputDir() );
         exporter.start();
 
-        exporter = new POJOExporter( cfg, serviceRegistry(), getOutputDir() );
+        exporter = new POJOExporter( getJDBCMetaDataConfiguration(), serviceRegistry(), getOutputDir() );
         exporter.getProperties().setProperty( "ejb3", "true" );
         exporter.start();
-
-        TestHelper.deleteDir( getOutputDir() );
     }
 
+    @Test
     public void testGenerateMappings() {
-
-        cfg.buildMappings();
-        TestHelper.deleteDir( getOutputDir() );
-
-        Exporter exporter = new HibernateMappingExporter( cfg, serviceRegistry(), getOutputDir() );
+        Exporter exporter = new HibernateMappingExporter( getJDBCMetaDataConfiguration(), serviceRegistry(), getOutputDir() );
         exporter.start();
-
         assertFileAndExists( new File( getOutputDir(), "org/reveng/Child.hbm.xml" ) );
-
         File file = new File( getOutputDir(), "GeneralHbmSettings.hbm.xml" );
         assertTrue( file + " should not exist", !file.exists() );
-
         Configuration derived = new Configuration();
 
         derived.addFile( new File( getOutputDir(), "org/reveng/Child.hbm.xml" ) );
@@ -105,9 +119,10 @@ public class GenerateFromJDBCTest extends JDBCMetaDataBinderTestCase {
         TestHelper.deleteDir( getOutputDir() );
     }
 
+    @Test
     public void testGenerateCfgXml() throws DocumentException {
 
-        Exporter exporter = new HibernateConfigurationExporter( cfg, serviceRegistry(), getOutputDir() );
+        Exporter exporter = new HibernateConfigurationExporter( getJDBCMetaDataConfiguration(), serviceRegistry(), getOutputDir() );
 
         exporter.start();
 
@@ -129,9 +144,14 @@ public class GenerateFromJDBCTest extends JDBCMetaDataBinderTestCase {
         }
     }
 
+    @Test
     public void testGenerateAnnotationCfgXml() throws DocumentException {
 
-        HibernateConfigurationExporter exporter = new HibernateConfigurationExporter( cfg,serviceRegistry(), getOutputDir() );
+        HibernateConfigurationExporter exporter = new HibernateConfigurationExporter(
+                getJDBCMetaDataConfiguration(),
+                serviceRegistry(),
+                getOutputDir()
+        );
 
         exporter.getProperties().setProperty( "ejb3", "true" );
 
@@ -163,9 +183,10 @@ public class GenerateFromJDBCTest extends JDBCMetaDataBinderTestCase {
         return xmlReader;
     }
 
+    @Test
     public void testGenerateDoc() {
 
-        DocExporter exporter = new DocExporter( cfg, getOutputDir() );
+        DocExporter exporter = new DocExporter( getJDBCMetaDataConfiguration(), serviceRegistry(), getOutputDir() );
 
         exporter.start();
 
@@ -173,8 +194,9 @@ public class GenerateFromJDBCTest extends JDBCMetaDataBinderTestCase {
 
     }
 
+    @Test
     public void testPackageNames() {
-        Iterator iter = cfg.getClassMappings();
+        Iterator iter = getJDBCMetaDataConfiguration().getClassMappings();
         while ( iter.hasNext() ) {
             PersistentClass element = (PersistentClass) iter.next();
             assertEquals( "org.reveng", StringHelper.qualifier( element.getClassName() ) );

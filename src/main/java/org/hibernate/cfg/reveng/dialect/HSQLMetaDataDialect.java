@@ -1,3 +1,27 @@
+/*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
 package org.hibernate.cfg.reveng.dialect;
 
 import java.sql.PreparedStatement;
@@ -12,90 +36,114 @@ import org.hibernate.mapping.Table;
 
 /**
  * @author Dmitry Geraskov
- *
  */
 public class HSQLMetaDataDialect extends JDBCMetaDataDialect {
 
-	private String quote(String columnName) {
-		if(columnName==null) return columnName;
-		if(needQuote(columnName)) {
-			if(columnName.length()>1 && columnName.charAt(0)=='\"' && columnName.charAt(columnName.length()-1)=='\"') {
-				return columnName; // avoid double quoting
-			}
-			return "\"" + columnName + "\"";
-		} else {
-			return columnName;
-		}		
-	}
-	   
-	public Iterator getSuggestedPrimaryKeyStrategyName(String catalog, String schema, String table) {
-		String sql = null;
-			try {			
-				catalog = caseForSearch( catalog );
-				schema = caseForSearch( schema );
-				table = caseForSearch( table );
-				
-				//log.debug("geSuggestedPrimaryKeyStrategyName(" + catalog + "." + schema + "." + table + ")");
-				
-				final String sc = schema;
-				final String cat = catalog;
-				return new ResultSetIterator(getMetaData().getTables(catalog, schema, table, new String[]{"TABLE"}),
-						getSQLExceptionConverter()) {
-					
-					Map element = new HashMap();
-					protected Object convertRow(ResultSet tableRs) throws SQLException{
-						String table = tableRs.getString("TABLE_NAME");
-						String fullTableName = Table.qualify(quote(cat), quote(sc), quote(table));
-						
-						String sql ="SELECT * FROM " + fullTableName + " WHERE 0>1"; // can't use FALSE constant since it would not work with older HSQL versions. (JBIDE-5957)
-						boolean isAutoIncrement = false;
-						
-						PreparedStatement statement = null;
-						try {
-							statement = getConnection().prepareStatement( sql );
-							element.clear();
-							element.put("TABLE_NAME", table);
-							element.put("TABLE_SCHEM", sc);
-							element.put("TABLE_CAT", null);						
+    private String quote(String columnName) {
+        if ( columnName == null ) {
+            return columnName;
+        }
+        if ( needQuote( columnName ) ) {
+            if ( columnName.length() > 1 && columnName.charAt( 0 ) == '\"' && columnName.charAt( columnName.length() - 1 ) == '\"' ) {
+                return columnName; // avoid double quoting
+            }
+            return "\"" + columnName + "\"";
+        }
+        else {
+            return columnName;
+        }
+    }
 
-							ResultSet rs = statement.executeQuery();
-							ResultSetMetaData rsmd = rs.getMetaData();
-							for (int i = 0; i < rsmd.getColumnCount(); i++) {
-								isAutoIncrement = rsmd.isAutoIncrement(i + 1);
-								if (isAutoIncrement) break;
-							}
+    public Iterator getSuggestedPrimaryKeyStrategyName(String catalog, String schema, String table) {
+        String sql = null;
+        try {
+            catalog = caseForSearch( catalog );
+            schema = caseForSearch( schema );
+            table = caseForSearch( table );
 
-						} catch(SQLException e) {
-							//log error and set HIBERNATE_STRATEGY to null
-							log.debug("Error while getting suggested primary key strategy for " + fullTableName + ". Falling back to default strategy.",e);
-						} finally {
-							if(statement!=null) {
-								try {
-									statement.close();
-								}
-								catch (SQLException e) {
-									throw getSQLExceptionConverter().convert(e,
-											"Problem while closing prepared statement", null);				
-								}
-							}
-						}
+            //log.debug("geSuggestedPrimaryKeyStrategyName(" + catalog + "." + schema + "." + table + ")");
 
-						if(isAutoIncrement) {
-							element.put("HIBERNATE_STRATEGY", "identity");
-						} else {
-							element.put("HIBERNATE_STRATEGY", null);							
-						}
-						return element;					
-					}
-					protected Throwable handleSQLException(SQLException e) {
-						// schemaRs and catalogRs are only used for error reporting if
-						// we get an exception
-						throw getSQLExceptionConverter().convert( e,
-								"Could not get list of suggested identity strategies from database. Probably a JDBC driver problem. ", null);					
-					}
-				};
-			} catch (SQLException e) {
-				throw getSQLExceptionConverter().convert(e, "Could not get list of suggested identity strategies from database. Probably a JDBC driver problem. ", sql);		         
-			} 		
-		}
+            final String sc = schema;
+            final String cat = catalog;
+            return new ResultSetIterator(
+                    getMetaData().getTables( catalog, schema, table, new String[] { "TABLE" } ),
+                    getSQLExceptionConverter()
+            ) {
+
+                Map element = new HashMap();
+
+                protected Object convertRow(ResultSet tableRs) throws SQLException {
+                    String table = tableRs.getString( "TABLE_NAME" );
+                    String fullTableName = Table.qualify( quote( cat ), quote( sc ), quote( table ) );
+
+                    String sql = "SELECT * FROM " + fullTableName + " WHERE 0>1"; // can't use FALSE constant since it would not work with older HSQL versions. (JBIDE-5957)
+                    boolean isAutoIncrement = false;
+
+                    PreparedStatement statement = null;
+                    try {
+                        statement = getConnection().prepareStatement( sql );
+                        element.clear();
+                        element.put( "TABLE_NAME", table );
+                        element.put( "TABLE_SCHEM", sc );
+                        element.put( "TABLE_CAT", null );
+
+                        ResultSet rs = statement.executeQuery();
+                        ResultSetMetaData rsmd = rs.getMetaData();
+                        for ( int i = 0; i < rsmd.getColumnCount(); i++ ) {
+                            isAutoIncrement = rsmd.isAutoIncrement( i + 1 );
+                            if ( isAutoIncrement ) {
+                                break;
+                            }
+                        }
+
+                    }
+                    catch ( SQLException e ) {
+                        //log error and set HIBERNATE_STRATEGY to null
+                        log.debug(
+                                "Error while getting suggested primary key strategy for " + fullTableName + ". Falling back to default strategy.",
+                                e
+                        );
+                    }
+                    finally {
+                        if ( statement != null ) {
+                            try {
+                                statement.close();
+                            }
+                            catch ( SQLException e ) {
+                                throw getSQLExceptionConverter().convert(
+                                        e,
+                                        "Problem while closing prepared statement", null
+                                );
+                            }
+                        }
+                    }
+
+                    if ( isAutoIncrement ) {
+                        element.put( "HIBERNATE_STRATEGY", "identity" );
+                    }
+                    else {
+                        element.put( "HIBERNATE_STRATEGY", null );
+                    }
+                    return element;
+                }
+
+                protected Throwable handleSQLException(SQLException e) {
+                    // schemaRs and catalogRs are only used for error reporting if
+                    // we get an exception
+                    throw getSQLExceptionConverter().convert(
+                            e,
+                            "Could not get list of suggested identity strategies from database. Probably a JDBC driver problem. ",
+                            null
+                    );
+                }
+            };
+        }
+        catch ( SQLException e ) {
+            throw getSQLExceptionConverter().convert(
+                    e,
+                    "Could not get list of suggested identity strategies from database. Probably a JDBC driver problem. ",
+                    sql
+            );
+        }
+    }
 }

@@ -1,36 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Hibernate, Relational Persistence for Idiomatic Java
+  ~
+  ~ Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+  ~ indicated by the @author tags or express copyright attribution
+  ~ statements applied by the authors.  All third-party contributions are
+  ~ distributed under license by Red Hat Inc.
+  ~
+  ~ This copyrighted material is made available to anyone wishing to use, modify,
+  ~ copy, or redistribute it subject to the terms and conditions of the GNU
+  ~ Lesser General Public License, as published by the Free Software Foundation.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+  ~ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+  ~ for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this distribution; if not, write to:
+  ~ Free Software Foundation, Inc.
+  ~ 51 Franklin Street, Fifth Floor
+  ~ Boston, MA  02110-1301  USA
+  -->
+
 <!DOCTYPE hibernate-reverse-engineering SYSTEM "http://hibernate.sourceforge.net/hibernate-reverse-engineering-3.0.dtd" >
 <hibernate-reverse-engineering>
 
-<!-- This one assumes set and many-to-one is exclude=false -->
+    <!-- This one assumes set and many-to-one is exclude=false -->
 
 
     <table name="EMPLOYEE">
-		<foreign-key constraint-name="EMPLOYEE_MANAGER"> 
-			<many-to-one property="manager" cascade="all" update="false" insert="false" fetch="join"/>
-			<set exclude="true"/>
-		</foreign-key>
-	</table> 
-	
-	<table name="PROJECT">
-	    <foreign-key constraint-name="PROJECT_MANAGER">
-	    	<many-to-one exclude="true"/>
-	    	<set property="managedProjects" cascade="delete, update"/>
-	    </foreign-key>
-	</table>	
-	
-	<table name="ADDRESS_PERSON">
-	    <foreign-key constraint-name="ADDRESS_PERSON">
-	    	<one-to-one exclude="true"/>
-	    	<inverse-one-to-one exclude="true"/>
-	    </foreign-key>
-	</table>
-	
-	<table name="ADDRESS_MULTI_PERSON">
-	    <foreign-key constraint-name="ADDRESS_MULTI_PERSON">
-	    	<one-to-one property="renamedOne" exclude="false" cascade="delete"/>
-	    	<inverse-one-to-one property="renamedInversedOne" exclude="false" cascade="update" fetch="join"/>
-	    </foreign-key>
-	</table>
-	
+        <foreign-key constraint-name="EMPLOYEE_MANAGER">
+            <many-to-one property="manager" cascade="all" update="false" insert="false" fetch="join"/>
+            <set exclude="true"/>
+        </foreign-key>
+    </table>
+
+    <table name="PROJECT">
+        <foreign-key constraint-name="PROJECT_MANAGER">
+            <many-to-one exclude="true"/>
+            <set property="managedProjects" cascade="delete, update"/>
+        </foreign-key>
+    </table>
+
+    <table name="ADDRESS_PERSON">
+        <foreign-key constraint-name="ADDRESS_PERSON">
+            <one-to-one exclude="true"/>
+            <inverse-one-to-one exclude="true"/>
+        </foreign-key>
+    </table>
+
+    <table name="ADDRESS_MULTI_PERSON">
+        <foreign-key constraint-name="ADDRESS_MULTI_PERSON">
+            <one-to-one property="renamedOne" exclude="false" cascade="delete"/>
+            <inverse-one-to-one property="renamedInversedOne" exclude="false" cascade="update" fetch="join"/>
+        </foreign-key>
+    </table>
+
 </hibernate-reverse-engineering>

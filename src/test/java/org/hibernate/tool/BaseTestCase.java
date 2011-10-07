@@ -27,10 +27,12 @@ package org.hibernate.tool;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.sql.Connection;
+import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -38,15 +40,15 @@ import java.util.List;
 import java.util.Properties;
 
 import junit.framework.ComparisonFailure;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
 import org.junit.Assert;
 
+import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
+import org.hibernate.cfg.Mappings;
 import org.hibernate.cfg.Settings;
 import org.hibernate.cfg.reveng.DefaultDatabaseCollector;
 import org.hibernate.cfg.reveng.ReverseEngineeringRuntimeInfo;
@@ -54,7 +56,14 @@ import org.hibernate.cfg.reveng.dialect.JDBCMetaDataDialect;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.jdbc.spi.JdbcServices;
 import org.hibernate.internal.util.config.ConfigurationHelper;
+import org.hibernate.mapping.Collection;
+import org.hibernate.mapping.PersistentClass;
+import org.hibernate.mapping.Property;
+import org.hibernate.mapping.SimpleValue;
 import org.hibernate.service.internal.BasicServiceRegistryImpl;
+import org.hibernate.testing.AfterClassOnce;
+import org.hibernate.testing.BeforeClassOnce;
+import org.hibernate.testing.cache.CachingRegionFactory;
 import org.hibernate.testing.junit4.BaseUnitTestCase;
 import org.hibernate.tool.test.TestHelper;
 
@@ -76,7 +85,7 @@ public abstract class BaseTestCase extends BaseUnitTestCase {
         public void run() throws Exception {
 
             TestHelper.compile(
-                    sourceDir, outputDir, TestHelper.visitAllFiles( sourceDir, new ArrayList() ), "1.5",
+                    sourceDir, outputDir, TestHelper.visitAllFiles( sourceDir, new ArrayList() ), "1.6",
                     TestHelper.buildClasspath( jars )
             );
             URL[] urls = TestHelper.buildClasspathURLS( jars, outputDir );
@@ -116,37 +125,43 @@ public abstract class BaseTestCase extends BaseUnitTestCase {
 
     }
 
-    protected static final Log SKIP_LOG = LogFactory.getLog( "org.hibernate.tool.test.SKIPPED" );
+    private File outputDir;
+    private Configuration configuration;
+    private BasicServiceRegistryImpl serviceRegistry;
+    private Settings settings;
+    private JdbcServices jdbcServices;
+    private Dialect dialect;
 
-    private File outputdir;
 
-    protected File createBaseFile(String relative) {
-        String root = System.getProperty( "hibernatetool.test.supportdir", "." );
-        return new File( root, relative );
+    public BaseTestCase() {
+        this.outputDir = new File( new File( "target", "tmp" ), getClass().getName() );
     }
 
-    public BaseTestCase(String name) {
-        this.outputdir = new File( "toolstestoutput", getClass().getName() );
-    }
-
-    public BaseTestCase(String name, String out) {
-        this.outputdir = new File( "toolstestoutput", out );
-    }
-
-    protected void setUp() throws Exception {
-        assertNoTables();
-
+    @BeforeClassOnce
+    public void prepareTest() throws Exception {
+//        cleanupOutputDir();
         if ( getOutputDir() != null ) {
             getOutputDir().mkdirs();
         }
 
+//        assertNoTables();
     }
 
-    protected void tearDown() throws Exception {
-
+    @AfterClassOnce
+    public void assertAllDataRemoved() {
         cleanupOutputDir();
 
-        assertNoTables();
+        try {
+            assertNoTables();
+        }
+        catch ( SQLException e ) {
+            throw new RuntimeException( "can't clean test data", e );
+        }
+    }
+
+    protected File createBaseFile(String relative) {
+        String root = System.getProperty( "hibernatetool.test.supportdir", "." );
+        return new File( root, relative );
     }
 
     protected void cleanupOutputDir() {
@@ -160,48 +175,32 @@ public abstract class BaseTestCase extends BaseUnitTestCase {
         return TestHelper.findFirstString( string, file );
     }
 
-    protected void assertFileAndExists(File file) {
-        Assert.assertTrue( file + " does not exist", file.exists() );
-        Assert.assertTrue( file + " not a file", file.isFile() );
-        Assert.assertTrue( file + " does not have any contents", file.length() > 0 );
-    }
 
     protected File getOutputDir() {
-        return outputdir;
+        return outputDir;
     }
 
-    private Configuration configuration;
-    private BasicServiceRegistryImpl serviceRegistry;
-    private Settings settings;
-    private Dialect dialect;
-    private JdbcServices jdbcServices;
-
-    protected Configuration cfg() {
+    protected Configuration configuration() {
         if ( configuration == null ) {
-            configuration = new Configuration();
+            configuration = constructAndConfigureConfiguration();
+            afterConstructAndConfigureConfiguration( configuration );
         }
-        return configuration;
-    }
 
-    protected Settings settings() {
-        if ( settings == null ) {
-            settings = cfg().buildSettings( serviceRegistry() );
-        }
-        return settings;
+        return configuration;
     }
 
     protected BasicServiceRegistryImpl serviceRegistry() {
         if ( serviceRegistry == null ) {
-            serviceRegistry = buildServiceRegistry( cfg() );
+            serviceRegistry = buildServiceRegistry( configuration() );
         }
         return serviceRegistry;
     }
 
-    protected Dialect dialect() {
-        if ( dialect == null ) {
-            dialect = serviceRegistry().getService( JdbcServices.class ).getDialect();
+    protected Settings settings() {
+        if ( settings == null ) {
+            settings = configuration().buildSettings( serviceRegistry() );
         }
-        return dialect;
+        return settings;
     }
 
     protected JdbcServices jdbcServices() {
@@ -209,6 +208,28 @@ public abstract class BaseTestCase extends BaseUnitTestCase {
             jdbcServices = serviceRegistry().getService( JdbcServices.class );
         }
         return jdbcServices;
+    }
+
+    protected Configuration constructAndConfigureConfiguration() {
+        Configuration cfg = constructConfiguration();
+        cfg.setProperty( AvailableSettings.CACHE_REGION_FACTORY, CachingRegionFactory.class.getName() );
+        cfg.setProperty( AvailableSettings.USE_NEW_ID_GENERATOR_MAPPINGS, "true" );
+        if ( createSchema() ) {
+            cfg.setProperty( AvailableSettings.HBM2DDL_AUTO, "create-drop" );
+        }
+        configure( cfg );
+        return cfg;
+    }
+
+    protected Configuration constructConfiguration() {
+        return new Configuration();
+    }
+
+    protected Dialect getDialect() {
+        if ( dialect == null ) {
+            dialect = jdbcServices().getDialect();
+        }
+        return dialect;
     }
 
     protected BasicServiceRegistryImpl buildServiceRegistry(Configuration configuration) {
@@ -223,98 +244,133 @@ public abstract class BaseTestCase extends BaseUnitTestCase {
         return serviceRegistry;
     }
 
+    private void afterConstructAndConfigureConfiguration(Configuration cfg) {
+        addMappings( cfg );
+        cfg.buildMappings();
+        applyCacheSettings( cfg );
+        afterConfigurationBuilt( cfg );
+    }
 
     protected void applyServices(BasicServiceRegistryImpl serviceRegistry) {
     }
 
-    public void assertNoTables() throws SQLException {
-
-
-        Connection con = null;
-        try {
-
-            con = jdbcServices().getConnectionProvider().getConnection();
-
-            JDBCMetaDataDialect dialect = new JDBCMetaDataDialect();
-
-            dialect.configure(
-                    ReverseEngineeringRuntimeInfo.createInstance(
-                            jdbcServices().getConnectionProvider(),
-                            jdbcServices().getSqlExceptionHelper().getSqlExceptionConverter(),
-                            new DefaultDatabaseCollector( dialect )
-                    )
-            );
-            Iterator tables = dialect.getTables(
-                    settings().getDefaultCatalogName(),
-                    settings().getDefaultSchemaName(),
-                    null
-            );
-
-            assertHasNext( 0, tables );
-        }
-        finally {
-            jdbcServices().getConnectionProvider().closeConnection( con );
-        }
-
+    protected void configure(Configuration configuration) {
     }
 
-    protected void assertHasNext(int expected, Iterator iterator) {
-        assertHasNext( null, expected, iterator );
-    }
-
-    /**
-     * @param i
-     * @param iterator
-     */
-    protected void assertHasNext(String reason, int expected, Iterator iterator) {
-        int actual = 0;
-        Object last = null;
-        while ( iterator.hasNext() && actual <= expected ) {
-            last = iterator.next();
-            actual++;
-        }
-
-        if ( actual < expected ) {
-            throw new ComparisonFailure( reason == null ? "Expected were less" : reason, "" + expected, "" + actual );
-        }
-
-        if ( actual > expected ) {
-            throw new ComparisonFailure(
-                    ( reason == null ? "Expected were higher" : reason ) + ", Last: " + last,
-                    "" + expected,
-                    "" + actual
-            );
-        }
-    }
-
-    /**
-     * Intended to indicate that this test class as a whole is intended for
-     * a dialect or series of dialects.  Skips here (appliesTo = false), therefore
-     * simply indicate that the given tests target a particular feature of the
-     * current database...
-     *
-     * @param dialect
-     */
-    public boolean appliesTo(Dialect dialect) {
+    protected boolean createSchema() {
         return true;
     }
 
-    /**
-     * @return
-     */
     protected String getBaseForMappings() {
         return "org/hibernate/tool/";
     }
 
+    protected void addMappings(Configuration configuration) {
+        String[] mappings = getMappings();
+        if ( mappings != null ) {
+            for ( String mapping : mappings ) {
+                configuration.addResource(
+                        getBaseForMappings() + mapping,
+                        getClass().getClassLoader()
+                );
+            }
+        }
+        Class<?>[] annotatedClasses = getAnnotatedClasses();
+        if ( annotatedClasses != null ) {
+            for ( Class<?> annotatedClass : annotatedClasses ) {
+                configuration.addAnnotatedClass( annotatedClass );
+            }
+        }
+        String[] annotatedPackages = getAnnotatedPackages();
+        if ( annotatedPackages != null ) {
+            for ( String annotatedPackage : annotatedPackages ) {
+                configuration.addPackage( annotatedPackage );
+            }
+        }
+        String[] xmlFiles = getXmlFiles();
+        if ( xmlFiles != null ) {
+            for ( String xmlFile : xmlFiles ) {
+                InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream( xmlFile );
+                configuration.addInputStream( is );
+            }
+        }
+    }
+
+    protected static final String[] NO_MAPPINGS = new String[0];
+
+    protected String[] getMappings() {
+        return NO_MAPPINGS;
+    }
+
+    protected static final Class<?>[] NO_CLASSES = new Class[0];
+
+    protected Class<?>[] getAnnotatedClasses() {
+        return NO_CLASSES;
+    }
+
+    protected String[] getAnnotatedPackages() {
+        return NO_MAPPINGS;
+    }
+
+    protected String[] getXmlFiles() {
+        // todo : rename to getOrmXmlFiles()
+        return NO_MAPPINGS;
+    }
 
     protected void addMappings(String[] files, Configuration cfg) {
         for ( int i = 0; i < files.length; i++ ) {
             if ( !files[i].startsWith( "net/" ) ) {
                 files[i] = getBaseForMappings() + files[i];
             }
-            //System.out.println("bc in " + this.getClass() + " " + getBaseForMappings() + " " + files[i]);
             cfg.addResource( files[i], this.getClass().getClassLoader() );
         }
+    }
+
+    protected void afterConfigurationBuilt(Configuration configuration) {
+        afterConfigurationBuilt( configuration.createMappings(), getDialect() );
+    }
+
+    protected void afterConfigurationBuilt(Mappings mappings, Dialect dialect) {
+    }
+
+
+    protected void applyCacheSettings(Configuration configuration) {
+        if ( getCacheConcurrencyStrategy() != null ) {
+            Iterator itr = configuration.getClassMappings();
+            while ( itr.hasNext() ) {
+                PersistentClass clazz = (PersistentClass) itr.next();
+                Iterator props = clazz.getPropertyClosureIterator();
+                boolean hasLob = false;
+                while ( props.hasNext() ) {
+                    Property prop = (Property) props.next();
+                    if ( prop.getValue().isSimpleValue() ) {
+                        String type = ( (SimpleValue) prop.getValue() ).getTypeName();
+                        if ( "blob".equals( type ) || "clob".equals( type ) ) {
+                            hasLob = true;
+                        }
+                        if ( Blob.class.getName().equals( type ) || Clob.class.getName().equals( type ) ) {
+                            hasLob = true;
+                        }
+                    }
+                }
+                if ( !hasLob && !clazz.isInherited() && overrideCacheStrategy() ) {
+                    configuration.setCacheConcurrencyStrategy( clazz.getEntityName(), getCacheConcurrencyStrategy() );
+                }
+            }
+            itr = configuration.getCollectionMappings();
+            while ( itr.hasNext() ) {
+                Collection coll = (Collection) itr.next();
+                configuration.setCollectionCacheConcurrencyStrategy( coll.getRole(), getCacheConcurrencyStrategy() );
+            }
+        }
+    }
+
+    protected boolean overrideCacheStrategy() {
+        return true;
+    }
+
+    protected String getCacheConcurrencyStrategy() {
+        return null;
     }
 
     /**
@@ -358,6 +414,59 @@ public abstract class BaseTestCase extends BaseUnitTestCase {
 
         pw.flush();
         pw.close();
+    }
+    //~~~~~~~~~~~~~~~~ assertions
+
+    public void assertNoTables() throws SQLException {
+        JDBCMetaDataDialect dialect = new JDBCMetaDataDialect();
+        dialect.configure(
+                ReverseEngineeringRuntimeInfo.createInstance(
+                        jdbcServices().getConnectionProvider(),
+                        jdbcServices().getSqlExceptionHelper().getSqlExceptionConverter(),
+                        new DefaultDatabaseCollector( dialect )
+                )
+        );
+        Iterator tables = dialect.getTables(
+                null,
+                null,
+                null
+        );
+        assertHasNext( 0, tables );
+    }
+
+    protected void assertHasNext(int expected, Iterator iterator) {
+        assertHasNext( null, expected, iterator );
+    }
+
+    /**
+     * @param i
+     * @param iterator
+     */
+    protected void assertHasNext(String reason, int expected, Iterator iterator) {
+        int actual = 0;
+        Object last = null;
+        while ( iterator.hasNext() && actual <= expected ) {
+            last = iterator.next();
+            actual++;
+        }
+
+        if ( actual < expected ) {
+            throw new ComparisonFailure( reason == null ? "Expected were less" : reason, "" + expected, "" + actual );
+        }
+
+        if ( actual > expected ) {
+            throw new ComparisonFailure(
+                    ( reason == null ? "Expected were higher" : reason ) + ", Last: " + last,
+                    "" + expected,
+                    "" + actual
+            );
+        }
+    }
+
+    protected void assertFileAndExists(File file) {
+        Assert.assertTrue( file + " does not exist", file.exists() );
+        Assert.assertTrue( file + " not a file", file.isFile() );
+        Assert.assertTrue( file + " does not have any contents", file.length() > 0 );
     }
 }
 

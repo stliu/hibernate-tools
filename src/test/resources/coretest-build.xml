@@ -23,47 +23,57 @@
   -->
 
 <project name="coreanttest">
-	<property name="build.dir" location="../../target/anttest" />
-	<property name="core.jar" location="${build.dir}/./lib/testlibs/hibernate3.jar" />
-	<property name="core.libs" location="${build.dir}/./lib/testlibs" />
-	<property name="jdbc.lib" location="./lib/jdbc/hsqldb.jar"/>
-	
-	<mkdir dir="${build.dir}" />
-	<property file="../../target/test-classes/hibernate.properties" />
+    <property name="build.dir" location="target/anttest"/>
+    <property name="core.jar" location="lib/testlibs/hibernate-core.jar"/>
+    <property name="core.libs" location="lib/testlibs"/>
+    <property name="jdbc.lib" location="lib/jdbc/hsqldb.jar"/>
+        <property name="hibernate.connection.driver_class" value="org.h2.Driver"/>
+    <property name="hibernate.connection.url" value="jdbc:h2:mem:db1;DB_CLOSE_DELAY=-1;MVCC=TRUE"/>
+    <property name="hibernate.connection.username" value="sa"/>
+    <property name="hibernate.connection.password" value=""/>
 
-	<path id="tasks.classpath">
-		<pathelement location="${core.jar}" />
-		<pathelement path="${jdbc.lib}" />
-	</path>
+    <mkdir dir="${build.dir}"/>
+    <property file="target/test-classes/hibernate.properties"/>
 
-	<target name="cleanup" description="remove topdown table">
-		<sql onerror="continue" driver="${hibernate.connection.driver_class}" url="${hibernate.connection.url}"
-		userid="${hibernate.connection.username}" password="${hibernate.connection.password}" classpath="${jdbc.lib}">
-	 drop table topdown;
-     </sql>
-	</target>
+    <path id="tasks.classpath">
+        <pathelement location="${core.jar}"/>
+        <pathelement path="${jdbc.lib}"/>
+    </path>
 
-	<target name="test-schemaexportwarning">
-		<taskdef name="schemaexport" classname="org.hibernate.tool.hbm2ddl.SchemaExportTask" classpathref="tasks.classpath" />
+    <target name="cleanup" description="remove topdown table">
+        <sql onerror="continue" driver="${hibernate.connection.driver_class}" url="${hibernate.connection.url}"
+             userid="${hibernate.connection.username}"
+             password="${hibernate.connection.password}"
+             classpath="${jdbc.lib}">
+            drop table topdown;
+        </sql>
+    </target>
 
-		 <schemaexport drop="true" quiet="false" text="false" output="${build.dir}/schemaexport.sql">
-			<fileset dir="../test" id="id">
-				<include name="**/*TopDown.hbm.xml" />
-			</fileset>
- 		</schemaexport>
-	</target>
+    <target name="test-schemaexportwarning">
+        <taskdef name="schemaexport"
+                 classname="org.hibernate.tool.hbm2ddl.SchemaExportTask"
+                 classpathref="tasks.classpath"/>
 
-	<target name="test-schemaupdatewarning">
-		<taskdef name="schemaupdate" classname="org.hibernate.tool.hbm2ddl.SchemaUpdateTask" classpathref="tasks.classpath"/>
+        <schemaexport drop="true" quiet="false" text="false" output="${build.dir}/schemaexport.sql">
+            <fileset dir="src/test" id="id">
+                <include name="**/*TopDown.hbm.xml"/>
+            </fileset>
+        </schemaexport>
+    </target>
 
-		 <schemaupdate quiet="false" text="false" outputfile="${build.dir}/notused.txt" >
-			<fileset dir="../test" id="id">
-				<include name="**/*TopDown.hbm.xml" />
-			</fileset>
- 		</schemaupdate>
-		
-		
-	</target>
+    <target name="test-schemaupdatewarning">
+        <taskdef name="schemaupdate"
+                 classname="org.hibernate.tool.hbm2ddl.SchemaUpdateTask"
+                 classpathref="tasks.classpath"/>
 
-		
+        <schemaupdate quiet="false" text="false" outputfile="${build.dir}/notused.txt">
+            <fileset dir="src/test" id="id">
+                <include name="**/*TopDown.hbm.xml"/>
+            </fileset>
+        </schemaupdate>
+
+
+    </target>
+
+
 </project>

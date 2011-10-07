@@ -1,193 +1,223 @@
+/*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
 package org.hibernate.tool.ide.completion;
 
 import org.hibernate.mapping.Property;
 
 
-
 public class HQLCompletionProposal {
-	
-	static final char[] NO_CHAR = new char[0];
-	
-	public static final int ENTITY_NAME = 1;
-	public static final int PROPERTY = 2;
-	public static final int KEYWORD = 3;
-	public static final int FUNCTION = 4;
-	public static final int ALIAS_REF = 5; // ref to an alias name, e.g. "bar" in "from Bar as bar where b|"
-	
-	protected static final int FIRST_KIND = ENTITY_NAME;
-	protected static final int LAST_KIND = ALIAS_REF;
-	
-	/**
-	 * kind of completion request.
-	 */
-	private int completionKind;
-	
-	/**
-	 * original cursorposition in the query
-	 */
-	private int completionLocation;
-	
-	/**
-	 * The actual completion. 
-	 */
-	private String completion = "";
-	
-	private int replaceStart = 0;	
-	private int replaceEnd = 0;
-	
-	/**
-	 * Relevance rating
-	 */
-	private int relevance = 1;
 
-	/** The default name for the entityname, keyword, property etc. */
-	private String simpleName = "";
-	
-	/** The full related entity name, the resolved shortEntityName. Can be null */
-	private String entityName = null;
-	
-	/** 
-	 * A short entity name. e.g. the imported name. 
-	 * e.g. "Product" instead of "org.hibernate.model.Product" 
-	 * (note: a imported name can also be the long version) 
-	 **/
-	private String shortEntityName = null;
-	
-	/**
-	 * The propertyName, can be null.  
-	 */
-	private String propertyName = null;
+    static final char[] NO_CHAR = new char[0];
 
-	/**
-	 * The underlying property. Can be null.
-	 */
-	private Property property;
-	
-	public String getCompletion() {
-		return completion;
-	}
+    public static final int ENTITY_NAME = 1;
+    public static final int PROPERTY = 2;
+    public static final int KEYWORD = 3;
+    public static final int FUNCTION = 4;
+    public static final int ALIAS_REF = 5; // ref to an alias name, e.g. "bar" in "from Bar as bar where b|"
 
-	public void setCompletion(String completion) {
-		this.completion = completion;
-	}
+    protected static final int FIRST_KIND = ENTITY_NAME;
+    protected static final int LAST_KIND = ALIAS_REF;
 
-	public int getCompletionKind() {
-		return completionKind;
-	}
+    /**
+     * kind of completion request.
+     */
+    private int completionKind;
 
-	public void setCompletionKind(int completionKind) {
-		this.completionKind = completionKind;
-	}
+    /**
+     * original cursorposition in the query
+     */
+    private int completionLocation;
 
-	public int getCompletionLocation() {
-		return completionLocation;
-	}
+    /**
+     * The actual completion.
+     */
+    private String completion = "";
 
-	public void setCompletionLocation(int completionLocation) {
-		this.completionLocation = completionLocation;
-	}
+    private int replaceStart = 0;
+    private int replaceEnd = 0;
 
-	public int getRelevance() {
-		return relevance;
-	}
+    /**
+     * Relevance rating
+     */
+    private int relevance = 1;
 
-	public void setRelevance(int relevance) {
-		this.relevance = relevance;
-	}
+    /**
+     * The default name for the entityname, keyword, property etc.
+     */
+    private String simpleName = "";
 
-	public int getReplaceEnd() {
-		return replaceEnd;
-	}
+    /**
+     * The full related entity name, the resolved shortEntityName. Can be null
+     */
+    private String entityName = null;
 
-	public void setReplaceEnd(int replaceEnd) {
-		this.replaceEnd = replaceEnd;
-	}
+    /**
+     * A short entity name. e.g. the imported name.
+     * e.g. "Product" instead of "org.hibernate.model.Product"
+     * (note: a imported name can also be the long version)
+     */
+    private String shortEntityName = null;
 
-	public int getReplaceStart() {
-		return replaceStart;
-	}
+    /**
+     * The propertyName, can be null.
+     */
+    private String propertyName = null;
 
-	public void setReplaceStart(int replaceStart) {
-		this.replaceStart = replaceStart;
-	}
-	
-	public HQLCompletionProposal(int kind, int cursorPosition) {
-		this.completionKind = kind;
-		this.completionLocation = cursorPosition; 
-	}
-		
-	public String getSimpleName() {
-		return simpleName;
-	}
+    /**
+     * The underlying property. Can be null.
+     */
+    private Property property;
 
-	public void setSimpleName(String simpleName) {
-		this.simpleName = simpleName;
-	}
+    public String getCompletion() {
+        return completion;
+    }
 
-	public String toString() {
-		StringBuffer buffer = new StringBuffer();
-		buffer.append('[');
-		switch(this.completionKind) {
-			case ENTITY_NAME :
-				buffer.append("ENTITY_NAME"); 
-				break;
-			case PROPERTY:
-				buffer.append("PROPERTY");
-				break;
-			case KEYWORD:
-				buffer.append("KEYWORD");
-				break;
-			default :
-				buffer.append("<Unknown type>");
-				break;
-				
-		}
-		buffer.append("]{completion:"); //$NON-NLS-1$
-		if (this.completion != null) buffer.append(this.completion);
-		buffer.append(", simpleName:"); //$NON-NLS-1$
-		if (this.simpleName != null) buffer.append(this.simpleName);
-		buffer.append(", ["); //$NON-NLS-1$
-		buffer.append(this.replaceStart);
-		buffer.append(',');
-		buffer.append(this.replaceEnd);
-		buffer.append("], relevance="); //$NON-NLS-1$
-		buffer.append(this.relevance);
-		buffer.append('}');
-		return buffer.toString();
-	}
+    public void setCompletion(String completion) {
+        this.completion = completion;
+    }
 
-	public String getEntityName() {
-		return entityName;
-	}
+    public int getCompletionKind() {
+        return completionKind;
+    }
 
-	public void setEntityName(String entityName) {
-		this.entityName = entityName;
-	}
+    public void setCompletionKind(int completionKind) {
+        this.completionKind = completionKind;
+    }
 
-	public String getShortEntityName() {
-		return shortEntityName;
-	}
+    public int getCompletionLocation() {
+        return completionLocation;
+    }
 
-	public void setShortEntityName(String shortEntityName) {
-		this.shortEntityName = shortEntityName;
-	}
+    public void setCompletionLocation(int completionLocation) {
+        this.completionLocation = completionLocation;
+    }
 
-	public String getPropertyName() {
-		return propertyName;
-	}
+    public int getRelevance() {
+        return relevance;
+    }
 
-	public void setPropertyName(String propertyName) {
-		this.propertyName = propertyName;
-	}
+    public void setRelevance(int relevance) {
+        this.relevance = relevance;
+    }
 
-	public void setProperty(Property element) {
-		this.property = element;		
-	}
+    public int getReplaceEnd() {
+        return replaceEnd;
+    }
 
-	public Property getProperty() {
-		return property;
-	}
-	
+    public void setReplaceEnd(int replaceEnd) {
+        this.replaceEnd = replaceEnd;
+    }
 
-	
+    public int getReplaceStart() {
+        return replaceStart;
+    }
+
+    public void setReplaceStart(int replaceStart) {
+        this.replaceStart = replaceStart;
+    }
+
+    public HQLCompletionProposal(int kind, int cursorPosition) {
+        this.completionKind = kind;
+        this.completionLocation = cursorPosition;
+    }
+
+    public String getSimpleName() {
+        return simpleName;
+    }
+
+    public void setSimpleName(String simpleName) {
+        this.simpleName = simpleName;
+    }
+
+    public String toString() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append( '[' );
+        switch ( this.completionKind ) {
+            case ENTITY_NAME:
+                buffer.append( "ENTITY_NAME" );
+                break;
+            case PROPERTY:
+                buffer.append( "PROPERTY" );
+                break;
+            case KEYWORD:
+                buffer.append( "KEYWORD" );
+                break;
+            default:
+                buffer.append( "<Unknown type>" );
+                break;
+
+        }
+        buffer.append( "]{completion:" ); //$NON-NLS-1$
+        if ( this.completion != null ) {
+            buffer.append( this.completion );
+        }
+        buffer.append( ", simpleName:" ); //$NON-NLS-1$
+        if ( this.simpleName != null ) {
+            buffer.append( this.simpleName );
+        }
+        buffer.append( ", [" ); //$NON-NLS-1$
+        buffer.append( this.replaceStart );
+        buffer.append( ',' );
+        buffer.append( this.replaceEnd );
+        buffer.append( "], relevance=" ); //$NON-NLS-1$
+        buffer.append( this.relevance );
+        buffer.append( '}' );
+        return buffer.toString();
+    }
+
+    public String getEntityName() {
+        return entityName;
+    }
+
+    public void setEntityName(String entityName) {
+        this.entityName = entityName;
+    }
+
+    public String getShortEntityName() {
+        return shortEntityName;
+    }
+
+    public void setShortEntityName(String shortEntityName) {
+        this.shortEntityName = shortEntityName;
+    }
+
+    public String getPropertyName() {
+        return propertyName;
+    }
+
+    public void setPropertyName(String propertyName) {
+        this.propertyName = propertyName;
+    }
+
+    public void setProperty(Property element) {
+        this.property = element;
+    }
+
+    public Property getProperty() {
+        return property;
+    }
+
+
 }

@@ -1,4 +1,28 @@
 /*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
+/*
  * This is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as
  * published by the Free Software Foundation; either version 2.1 of
@@ -23,179 +47,190 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.XPath;
 import org.dom4j.io.SAXReader;
+import org.junit.Before;
+import org.junit.Test;
 
 import org.hibernate.cfg.Configuration;
 import org.hibernate.tool.NonReflectiveTestCase;
 import org.hibernate.tool.hbm2x.Exporter;
 import org.hibernate.tool.hbm2x.HibernateMappingExporter;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 /**
  * @author Dmitry Geraskov
- *
  */
 public class TypeParamsTest extends NonReflectiveTestCase {
-	
-	private String mappingFile = "Order.hbm.xml";
 
-	private Exporter hbmexporter;
+    private String mappingFile = "Order.hbm.xml";
 
-	/**
-	 * @param name
-	 */
-	public TypeParamsTest(String name) {
-		super(name, "cfg2hbmoutput");
-	}
+    private Exporter hbmexporter;
 
+    @Override
+    protected String[] getMappings() {
+        return new String[] {
+                mappingFile
+        };
+    }
 
-	protected String[] getMappings() {
-		return new String[] {
-				mappingFile
-		};
-	}
+    @Before
+    public void setUp() throws Exception {
 
-	protected void setUp() throws Exception {
-		super.setUp();
+        hbmexporter = new HibernateMappingExporter( configuration(), serviceRegistry(), getOutputDir() );
+        hbmexporter.start();
+    }
 
-		hbmexporter = new HibernateMappingExporter(getCfg(), getOutputDir() );
-		hbmexporter.start();
-	}
+    @Test
+    public void testAllFilesExistence() {
+        assertFileAndExists( new File( getOutputDir().getAbsolutePath(), getBaseForMappings() + mappingFile ) );
+    }
 
-	public void testAllFilesExistence() {
-		assertFileAndExists(new File(getOutputDir().getAbsolutePath(),  getBaseForMappings() + mappingFile) );
-	}
-
-	public void testReadable() {
+    @Test
+    public void testReadable() {
         Configuration cfg = new Configuration();
-        cfg.addFile(new File(getOutputDir(), getBaseForMappings() + "Order.hbm.xml"));
+        cfg.addFile( new File( getOutputDir(), getBaseForMappings() + "Order.hbm.xml" ) );
         cfg.buildMappings();
     }
 
-	public void testTypeParamsElements() throws DocumentException {
-		File outputXml = new File(getOutputDir(),  getBaseForMappings() + mappingFile);
-		assertFileAndExists(outputXml);
+    @Test
+    public void testTypeParamsElements() throws DocumentException {
+        File outputXml = new File( getOutputDir(), getBaseForMappings() + mappingFile );
+        assertFileAndExists( outputXml );
 
-		SAXReader xmlReader =  getSAXReader();
+        SAXReader xmlReader = getSAXReader();
 
-		Document document = xmlReader.read(outputXml);
+        Document document = xmlReader.read( outputXml );
 
-		XPath xpath = DocumentHelper.createXPath("//hibernate-mapping/class/property");
-		List list = xpath.selectNodes(document);
-		assertEquals("Expected to get one property element", 2, list.size());
-		Element statusElement = (Element) list.get(0);
-		Element nameElement = (Element) list.get(1);
-		if(!statusElement.attribute( "name" ).getText().equals("status")) {
-			Element temp = nameElement;
-			nameElement = statusElement;
-			statusElement = temp;
-		}
-		assertEquals(statusElement.attribute( "name" ).getText(),"status");
-		
-		list = statusElement.elements("type");
-		assertEquals("Expected to get one type element", 1, list.size());
-		
-		list =  ((Element) list.get(0)).elements("param");		
-		assertEquals("Expected to get 5 params elements", list.size(), 5);
-		
-		Map params = new HashMap();
-		for (int i = 0; i < list.size(); i++) {
-			Element param = (Element) list.get(i);
-			params.put(param.attribute( "name" ).getText(), param.getText());
-		}
-		
-		Set set = params.entrySet();
-		assertEquals("Expected to get 5 different params elements", set.size(), 5);
-		
-		assertTrue("Can't find 'catalog' param", 
-				set.contains(new TestEntry("catalog", "")));
-		
-		assertTrue("Can't find 'column' param", 
-				set.contains(new TestEntry("column", "STATUS")));
-		
-		assertTrue("Can't find 'table' param", 
-				set.contains(new TestEntry("table", "ORDERS")));
-		
-		assertTrue("Can't find 'schema' param", 
-				set.contains(new TestEntry("schema", "")));
-		
-		assertTrue("Can't find 'enumClass' param", 
-				set.contains(new TestEntry("enumClass", "org.hibernate.tool.hbm2x.hbm2hbmxml.Order$Status")));
+        XPath xpath = DocumentHelper.createXPath( "//hibernate-mapping/class/property" );
+        List list = xpath.selectNodes( document );
+        assertEquals( "Expected to get one property element", 2, list.size() );
+        Element statusElement = (Element) list.get( 0 );
+        Element nameElement = (Element) list.get( 1 );
+        if ( !statusElement.attribute( "name" ).getText().equals( "status" ) ) {
+            Element temp = nameElement;
+            nameElement = statusElement;
+            statusElement = temp;
+        }
+        assertEquals( statusElement.attribute( "name" ).getText(), "status" );
 
-		assertTrue("property name should not have any type element",nameElement.elements("type").isEmpty());
-		assertEquals(nameElement.attribute("type").getText(), "string");
-	}
+        list = statusElement.elements( "type" );
+        assertEquals( "Expected to get one type element", 1, list.size() );
 
-	protected String getBaseForMappings() {
-		return "org/hibernate/tool/hbm2x/hbm2hbmxml/";
-	}
+        list = ( (Element) list.get( 0 ) ).elements( "param" );
+        assertEquals( "Expected to get 5 params elements", list.size(), 5 );
 
-	public static Test suite() {
-		return new TestSuite(TypeParamsTest.class);
-	}
+        Map params = new HashMap();
+        for ( int i = 0; i < list.size(); i++ ) {
+            Element param = (Element) list.get( i );
+            params.put( param.attribute( "name" ).getText(), param.getText() );
+        }
+
+        Set set = params.entrySet();
+        assertEquals( "Expected to get 5 different params elements", set.size(), 5 );
+
+        assertTrue(
+                "Can't find 'catalog' param",
+                set.contains( new TestEntry( "catalog", "" ) )
+        );
+
+        assertTrue(
+                "Can't find 'column' param",
+                set.contains( new TestEntry( "column", "STATUS" ) )
+        );
+
+        assertTrue(
+                "Can't find 'table' param",
+                set.contains( new TestEntry( "table", "ORDERS" ) )
+        );
+
+        assertTrue(
+                "Can't find 'schema' param",
+                set.contains( new TestEntry( "schema", "" ) )
+        );
+
+        assertTrue(
+                "Can't find 'enumClass' param",
+                set.contains( new TestEntry( "enumClass", "org.hibernate.tool.hbm2x.hbm2hbmxml.Order$Status" ) )
+        );
+
+        assertTrue( "property name should not have any type element", nameElement.elements( "type" ).isEmpty() );
+        assertEquals( nameElement.attribute( "type" ).getText(), "string" );
+    }
+
+    @Override
+    protected String getBaseForMappings() {
+        return "org/hibernate/tool/hbm2x/hbm2hbmxml/";
+    }
 
 }
 
-class TestEntry implements Entry{
-	
-	private Object key;
-	
-	private Object value;
-	
-	public TestEntry(Object key, Object value){
-		this.key = key;
-		this.value = value;
-	}
+class TestEntry implements Entry {
 
-	public Object getKey() {
-		return key;
-	}
+    private Object key;
 
-	public Object getValue() {
-		return value;
-	}
+    private Object value;
 
-	public Object setValue(Object value) {
-		return this.value = value;
-	}
+    public TestEntry(Object key, Object value) {
+        this.key = key;
+        this.value = value;
+    }
 
-	
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((key == null) ? 0 : key.hashCode());
-		result = prime * result + ((value == null) ? 0 : value.hashCode());
-		return result;
-	}
+    public Object getKey() {
+        return key;
+    }
 
-	
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (!(obj instanceof Entry)){
-			return false;
-		}
-		
-		Entry other = (Entry) obj;		
-		if (key == null) {
-			if (other.getKey() != null)
-				return false;
-		} else if (!key.equals(other.getKey()))
-			return false;
-		if (value == null) {
-			if (other.getValue() != null)
-				return false;
-		} else if (!value.equals(other.getValue()))
-			return false;
-		return true;
-	}
-	
-	
-	
+    public Object getValue() {
+        return value;
+    }
+
+    public Object setValue(Object value) {
+        return this.value = value;
+    }
+
+
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ( ( key == null ) ? 0 : key.hashCode() );
+        result = prime * result + ( ( value == null ) ? 0 : value.hashCode() );
+        return result;
+    }
+
+
+    public boolean equals(Object obj) {
+        if ( this == obj ) {
+            return true;
+        }
+        if ( !( obj instanceof Entry ) ) {
+            return false;
+        }
+
+        Entry other = (Entry) obj;
+        if ( key == null ) {
+            if ( other.getKey() != null ) {
+                return false;
+            }
+        }
+        else if ( !key.equals( other.getKey() ) ) {
+            return false;
+        }
+        if ( value == null ) {
+            if ( other.getValue() != null ) {
+                return false;
+            }
+        }
+        else if ( !value.equals( other.getValue() ) ) {
+            return false;
+        }
+        return true;
+    }
+
+
 }

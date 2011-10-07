@@ -1,3 +1,27 @@
+/*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
 package org.hibernate.tool.hbm2x;
 
 import java.io.BufferedReader;
@@ -13,20 +37,20 @@ import java.util.Map;
 
 import org.hibernate.HibernateException;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.internal.util.StringHelper;
 import org.hibernate.mapping.Table;
+import org.hibernate.service.ServiceRegistry;
 import org.hibernate.tool.hbm2x.doc.DocFile;
 import org.hibernate.tool.hbm2x.doc.DocFileManager;
 import org.hibernate.tool.hbm2x.doc.DocHelper;
 import org.hibernate.tool.hbm2x.pojo.POJOClass;
-import org.hibernate.util.StringHelper;
 
 /**
  * Exporter implementation that creates Hibernate Documentation.
  * Creates Tables and Classes Details
- * 
+ *
  * @author Ricardo C. Moral
  * @author <a href="mailto:abhayani@jboss.org">Amit Bhayani</a>
- * 
  */
 public class DocExporter extends AbstractExporter {
 
@@ -49,42 +73,42 @@ public class DocExporter extends AbstractExporter {
      * Main index page.
      */
     private static final String FILE_INDEX = "doc/index.html";
-    
+
     /**
      * Template used for the index of the table documentation.
      */
     private static final String FTL_TABLES_INDEX = "doc/tables/index.ftl";
-    
+
     /**
      * Template used for index of the entity documentation
      */
     private static final String FTL_ENTITIES_INDEX = "doc/entities/index.ftl";
-    
+
     /**
      * Template used for the Classes Summary
      */
     private static final String FTL_ENTITIES_SUMMARY = "doc/entities/summary.ftl";
-    
+
     /**
      * Template used for Class details
      */
     private static final String FTL_ENTITIES_ENTITY = "doc/entities/entity.ftl";
-    
+
     /**
      * Template used to create the Package List
      */
     private static final String FTL_ENTITIES_PACKAGE_LIST = "doc/entities/package-list.ftl";
-    
+
     /**
      * Template used to create the list of all Classes
      */
     private static final String FTL_ENTITIES_ENTITY_LIST = "doc/entities/allEntity-list.ftl";
-    
+
     /**
      * Template used to create List of Classes specific to packages.
      */
     private static final String FTL_ENTITIES_PERPACKAGE_ENTITY_LIST = "doc/entities/perPackageEntity-list.ftl";
-    
+
     /**
      * Template used to show the specific package details
      */
@@ -129,166 +153,202 @@ public class DocExporter extends AbstractExporter {
      * Doc File Manager.
      */
     private DocFileManager docFileManager;
-    
+
     /**
      * Creates a new object.
-     * 
+     *
      * @param cfg hibernate configuration.
      * @param outputdir the output directory.
      * @param templatePaths the template paths.
      */
-    public DocExporter(Configuration cfg, File outputdir) {
-        super(cfg, outputdir);
+    public DocExporter(Configuration cfg, ServiceRegistry serviceRegistry, File outputdir) {
+        super( cfg, serviceRegistry, outputdir );
     }
 
     public DocExporter() {
- 
-	}
 
-	public void doStart() throws ExporterException {
+    }
+
+    public void doStart() throws ExporterException {
         generateCommmonAndAssets();
-        
+
         boolean graphsGenerated = generateDot();
         generateTablesIndex();
-        generateTablesSummary(graphsGenerated);
+        generateTablesSummary( graphsGenerated );
         generateTablesDetails();
         generateTablesAllSchemasList();
         generateTablesAllTablesList();
         generateTablesSchemaTableList();
         generateTablesSchemaDetailedInfo();
-        
+
         generateEntitiesIndex();
-        generatePackageSummary(graphsGenerated);
+        generatePackageSummary( graphsGenerated );
         generateEntitiesDetails();
         generateEntitiesAllPackagesList();
         generateEntitiesAllEntitiesList();
         generateEntitiesPackageEntityList();
         generateEntitiesPackageDetailedInfo();
-        
-        
+
+
     }
 
-	private boolean generateDot() {
-		String cmd = getProperties().getProperty( "dot.executable" );
-		boolean ignoreError = Boolean.parseBoolean(getProperties().getProperty("dot.ignoreerror", "false"));
-		
-		if(StringHelper.isNotEmpty( cmd )) {
-			try {
-				GenericExporter exporter = new GenericExporter(getConfiguration(), getOutputDirectory());
-				exporter.setTemplateName( "dot/entitygraph.dot.ftl" );
-				exporter.setFilePattern( "entities/entitygraph.dot" );
-				exporter.setArtifactCollector( getArtifactCollector() );
-				exporter.setProperties( getProperties() );
-				exporter.setTemplatePath( getTemplatePaths() );
-				exporter.start();
+    private boolean generateDot() {
+        String cmd = getProperties().getProperty( "dot.executable" );
+        boolean ignoreError = Boolean.parseBoolean( getProperties().getProperty( "dot.ignoreerror", "false" ) );
 
-				exporter.setTemplateName( "dot/tablegraph.dot.ftl" );
-				exporter.setFilePattern( "tables/tablegraph.dot" );
-				exporter.setProperties( getProperties() );
-				exporter.start();
-				
-				
-				File entityGraphDot = new File(getOutputDirectory(), "entities/entitygraph.dot");
-				dotToFile( cmd, entityGraphDot.toString(), new File(getOutputDirectory(), "entities/entitygraph.png").toString());
-				dotToFile( cmd, entityGraphDot.toString(), new File(getOutputDirectory(), "entities/entitygraph.svg").toString());
-				dotToFile( cmd, entityGraphDot.toString(), new File(getOutputDirectory(), "entities/entitygraph.cmap").toString());
-				
-				File tableGraphDot = new File(getOutputDirectory(), "tables/tablegraph.dot");
-				dotToFile( cmd, tableGraphDot.toString(), new File(getOutputDirectory(), "tables/tablegraph.png").toString());
-				dotToFile( cmd, tableGraphDot.toString(), new File(getOutputDirectory(), "tables/tablegraph.svg").toString());
-				dotToFile( cmd, tableGraphDot.toString(), new File(getOutputDirectory(), "tables/tablegraph.cmap").toString());
-			
-				return true;
+        if ( StringHelper.isNotEmpty( cmd ) ) {
+            try {
+                GenericExporter exporter = new GenericExporter(
+                        getConfiguration(),
+                        getServiceRegistry(),
+                        getOutputDirectory()
+                );
+                exporter.setTemplateName( "dot/entitygraph.dot.ftl" );
+                exporter.setFilePattern( "entities/entitygraph.dot" );
+                exporter.setArtifactCollector( getArtifactCollector() );
+                exporter.setProperties( getProperties() );
+                exporter.setTemplatePath( getTemplatePath() );
+                exporter.start();
 
-			}
-			catch (IOException e) {
-				if(ignoreError) {
-					log.warn( "Skipping entitygraph creation since dot.executable was not found and dot.ignoreerror=false." );
-					return false;
-				} else {
-					throw new HibernateException("Problem while generating DOT graph for Configuration (set dot.ignoreerror=false to ignore)", e);
-				}
-			}
-		} else {
-			log.info( "Skipping entitygraph creation since dot.executable is empty or not-specified." );
-			return false;
-		}
-	}
+                exporter.setTemplateName( "dot/tablegraph.dot.ftl" );
+                exporter.setFilePattern( "tables/tablegraph.dot" );
+                exporter.setProperties( getProperties() );
+                exporter.start();
 
-	public static final String OS_NAME = System.getProperty("os.name");    
-    public static final boolean IS_LINUX = OS_NAME.startsWith("Linux");    
-	
-	private String escape(String fileName){
-		
-		// Linux does not need " " around file names
-		if (IS_LINUX){
-			return fileName;
-		}
-		
-		// Windows needs " " around file names; actually we do not 
-		// need it always, only when spaces are present;
-		// but it does not hurt to usem them always
-		return "\"" + fileName + "\"";
-		
-	}
-	
-	private void dotToFile(String dotExeFileName, String dotFileName, String outFileName) throws IOException {
 
-		//
-		// dot.exe works by taking *.dot file and piping 
-		// results into another file, for example:
-		// d:\graphviz-1.12\bin\dot.exe -Tgif c:\temp\ManualDraw.dot > c:\temp\ManualDraw.gif
-		// so we follow that model here and read stdout until EOF
-		// 
-	
-		final String exeCmd = 
-			escape(dotExeFileName) + 
-			" -T" + getFormatForFile(outFileName) + " " + 
-			escape(dotFileName) +
-			" -o " + 
-			escape(outFileName);			
-	
-		Process p = Runtime.getRuntime().exec(exeCmd);
-		//p.getErrorStream().
-		try {
-			log.debug( "Executing: " + exeCmd );
+                File entityGraphDot = new File( getOutputDirectory(), "entities/entitygraph.dot" );
+                dotToFile(
+                        cmd,
+                        entityGraphDot.toString(),
+                        new File( getOutputDirectory(), "entities/entitygraph.png" ).toString()
+                );
+                dotToFile(
+                        cmd,
+                        entityGraphDot.toString(),
+                        new File( getOutputDirectory(), "entities/entitygraph.svg" ).toString()
+                );
+                dotToFile(
+                        cmd,
+                        entityGraphDot.toString(),
+                        new File( getOutputDirectory(), "entities/entitygraph.cmap" ).toString()
+                );
+
+                File tableGraphDot = new File( getOutputDirectory(), "tables/tablegraph.dot" );
+                dotToFile(
+                        cmd,
+                        tableGraphDot.toString(),
+                        new File( getOutputDirectory(), "tables/tablegraph.png" ).toString()
+                );
+                dotToFile(
+                        cmd,
+                        tableGraphDot.toString(),
+                        new File( getOutputDirectory(), "tables/tablegraph.svg" ).toString()
+                );
+                dotToFile(
+                        cmd,
+                        tableGraphDot.toString(),
+                        new File( getOutputDirectory(), "tables/tablegraph.cmap" ).toString()
+                );
+
+                return true;
+
+            }
+            catch ( IOException e ) {
+                if ( ignoreError ) {
+                    log.warn(
+                            "Skipping entitygraph creation since dot.executable was not found and dot.ignoreerror=false."
+                    );
+                    return false;
+                }
+                else {
+                    throw new HibernateException(
+                            "Problem while generating DOT graph for Configuration (set dot.ignoreerror=false to ignore)",
+                            e
+                    );
+                }
+            }
+        }
+        else {
+            log.info( "Skipping entitygraph creation since dot.executable is empty or not-specified." );
+            return false;
+        }
+    }
+
+    public static final String OS_NAME = System.getProperty( "os.name" );
+    public static final boolean IS_LINUX = OS_NAME.startsWith( "Linux" );
+
+    private String escape(String fileName) {
+
+        // Linux does not need " " around file names
+        if ( IS_LINUX ) {
+            return fileName;
+        }
+
+        // Windows needs " " around file names; actually we do not
+        // need it always, only when spaces are present;
+        // but it does not hurt to usem them always
+        return "\"" + fileName + "\"";
+
+    }
+
+    private void dotToFile(String dotExeFileName, String dotFileName, String outFileName) throws IOException {
+
+        //
+        // dot.exe works by taking *.dot file and piping
+        // results into another file, for example:
+        // d:\graphviz-1.12\bin\dot.exe -Tgif c:\temp\ManualDraw.dot > c:\temp\ManualDraw.gif
+        // so we follow that model here and read stdout until EOF
+        //
+
+        final String exeCmd =
+                escape( dotExeFileName ) +
+                        " -T" + getFormatForFile( outFileName ) + " " +
+                        escape( dotFileName ) +
+                        " -o " +
+                        escape( outFileName );
+
+        Process p = Runtime.getRuntime().exec( exeCmd );
+        //p.getErrorStream().
+        try {
+            log.debug( "Executing: " + exeCmd );
 //			 Get the input stream and read from it
-	        InputStream in = p.getErrorStream();
-	        int c;
-	        while ((c = in.read()) != -1) {
-	            System.out.print((char)c);
-	        }
-	        in.close();
-			int i = p.waitFor( );
-			if(i!=0) {
-				//TODO: dump system.err
-				log.error("Error " + i + " while executing: " + exeCmd);				
-			}
-		} catch(Exception ie){
-			log.error( "Error while executing: " + exeCmd, ie );
-		}
-	}		
+            InputStream in = p.getErrorStream();
+            int c;
+            while ( ( c = in.read() ) != -1 ) {
+                System.out.print( (char) c );
+            }
+            in.close();
+            int i = p.waitFor();
+            if ( i != 0 ) {
+                //TODO: dump system.err
+                log.error( "Error " + i + " while executing: " + exeCmd );
+            }
+        }
+        catch ( Exception ie ) {
+            log.error( "Error while executing: " + exeCmd, ie );
+        }
+    }
 
-	private String getFormatForFile(String outFileName){
-		int idx = outFileName.lastIndexOf(".");
-		if (idx == -1 || idx == outFileName.length() - 1){
-			throw new IllegalArgumentException("Can't determine file name extention for file name " + outFileName); 
-		}
-		return outFileName.substring(idx + 1);
-	}
-	
+    private String getFormatForFile(String outFileName) {
+        int idx = outFileName.lastIndexOf( "." );
+        if ( idx == -1 || idx == outFileName.length() - 1 ) {
+            throw new IllegalArgumentException( "Can't determine file name extention for file name " + outFileName );
+        }
+        return outFileName.substring( idx + 1 );
+    }
 
-	protected void setupContext() {
-		if(!getProperties().contains( "jdk5" )) {
-			getProperties().setProperty( "jdk5", "true" );
-		}		
-		super.setupContext();
-		docHelper = new DocHelper( getConfiguration(), getCfg2JavaTool() );
-        docFileManager = new DocFileManager(docHelper, getOutputDirectory() );
 
-        getTemplateHelper().putInContext("dochelper", docHelper);
-        getTemplateHelper().putInContext("docFileManager", docFileManager);
-	}
+    protected void setupContext() {
+        if ( !getProperties().contains( "jdk5" ) ) {
+            getProperties().setProperty( "jdk5", "true" );
+        }
+        super.setupContext();
+        docHelper = new DocHelper( getConfiguration(), getServiceRegistry(), getCfg2JavaTool() );
+        docFileManager = new DocFileManager( docHelper, getOutputDirectory() );
+
+        getTemplateHelper().putInContext( "dochelper", docHelper );
+        getTemplateHelper().putInContext( "docFileManager", docFileManager );
+    }
 
     /**
      * Generate common files and copy assets.
@@ -297,23 +357,25 @@ public class DocExporter extends AbstractExporter {
         try {
             DocFile cssStylesDocFile = docFileManager.getCssStylesDocFile();
 
-            processTemplate(Collections.EMPTY_MAP, FILE_CSS_DEFINITION, cssStylesDocFile.getFile());
+            processTemplate( Collections.EMPTY_MAP, FILE_CSS_DEFINITION, cssStylesDocFile.getFile() );
 
             DocFile hibernateLogoDocFile = docFileManager.getHibernateImageDocFile();
 
-            DocFileManager.copy(this.getClass().getClassLoader(), FILE_HIBERNATE_IMAGE,
-                    hibernateLogoDocFile.getFile() );
+            DocFileManager.copy(
+                    this.getClass().getClassLoader(), FILE_HIBERNATE_IMAGE,
+                    hibernateLogoDocFile.getFile()
+            );
 
             DocFile extendsImageDocFile = docFileManager.getExtendsImageDocFile();
-                        
-            DocFileManager.copy(this.getClass().getClassLoader(), FILE_EXTENDS_IMAGE, extendsImageDocFile.getFile());
-            
+
+            DocFileManager.copy( this.getClass().getClassLoader(), FILE_EXTENDS_IMAGE, extendsImageDocFile.getFile() );
+
             DocFile mainIndexDocFile = docFileManager.getMainIndexDocFile();
 
-            processTemplate(Collections.EMPTY_MAP, FILE_INDEX, mainIndexDocFile.getFile() );
-        } 
-        catch (IOException ioe) {
-            throw new RuntimeException("Error while copying files.", ioe);
+            processTemplate( Collections.EMPTY_MAP, FILE_INDEX, mainIndexDocFile.getFile() );
+        }
+        catch ( IOException ioe ) {
+            throw new RuntimeException( "Error while copying files.", ioe );
         }
     }
 
@@ -326,25 +388,26 @@ public class DocExporter extends AbstractExporter {
         File file = docFile.getFile();
 
         Map parameters = new HashMap();
-        parameters.put("docFile", docFile);
+        parameters.put( "docFile", docFile );
 
-        processTemplate(parameters, FTL_TABLES_INDEX, file);
+        processTemplate( parameters, FTL_TABLES_INDEX, file );
     }
-    
+
     /**
      * Generate the index file of the class documentation
      */
-    public void generateEntitiesIndex(){
-    	DocFile docFile = docFileManager.getClassIndexDocFile();
-    	File file = docFile.getFile();
-    	Map parameters = new HashMap();
-    	parameters.put("docFile", docFile);
-    	processTemplate(parameters, FTL_ENTITIES_INDEX, file );
+    public void generateEntitiesIndex() {
+        DocFile docFile = docFileManager.getClassIndexDocFile();
+        File file = docFile.getFile();
+        Map parameters = new HashMap();
+        parameters.put( "docFile", docFile );
+        processTemplate( parameters, FTL_ENTITIES_INDEX, file );
     }
 
     /**
      * Generate a file with an summary of all the tables.
-     * @param graphsGenerated 
+     *
+     * @param graphsGenerated
      */
     public void generateTablesSummary(boolean graphsGenerated) {
         DocFile docFile = docFileManager.getTableSummaryDocFile();
@@ -352,57 +415,57 @@ public class DocExporter extends AbstractExporter {
         File file = docFileManager.getTableSummaryDocFile().getFile();
 
         Map parameters = new HashMap();
-        parameters.put("docFile", docFile);
+        parameters.put( "docFile", docFile );
         parameters.put( "graphsGenerated", Boolean.valueOf( graphsGenerated ) );
-        if(graphsGenerated) {
-        	StringBuffer sb = new StringBuffer();
-        	String fileName = "tables/tablegraph.cmap";
-        	appendFile( sb, fileName );
+        if ( graphsGenerated ) {
+            StringBuffer sb = new StringBuffer();
+            String fileName = "tables/tablegraph.cmap";
+            appendFile( sb, fileName );
             parameters.put( "tablegrapharea", sb );
         }
-        
-        processTemplate(parameters, FTL_TABLES_SUMMARY, file);
+
+        processTemplate( parameters, FTL_TABLES_SUMMARY, file );
     }
 
-	private void appendFile(StringBuffer sb, String fileName) {
-		try {
-			BufferedReader in = new BufferedReader(new FileReader(new File(getOutputDirectory(), fileName)));
-		    String str;
-		    
-		    while ((str = in.readLine()) != null) {
-		        sb.append(str);
-		        sb.append(System.getProperty("line.separator"));
-		    }
-		    
-		    in.close();
-		} catch (IOException e) {
-		}
-	}
-    
+    private void appendFile(StringBuffer sb, String fileName) {
+        try {
+            BufferedReader in = new BufferedReader( new FileReader( new File( getOutputDirectory(), fileName ) ) );
+            String str;
+
+            while ( ( str = in.readLine() ) != null ) {
+                sb.append( str );
+                sb.append( System.getProperty( "line.separator" ) );
+            }
+
+            in.close();
+        }
+        catch ( IOException e ) {
+        }
+    }
+
     /**
-     * Generate summary (summaty.html) to show all the packages 
-     *
+     * Generate summary (summaty.html) to show all the packages
      */
-    public void generatePackageSummary(boolean graphsGenerated){
-    	DocFile docFile = docFileManager.getClassSummaryFile(); 
-    	File file = docFile.getFile();
-    	
-    	Map parameters = new HashMap();
-    	parameters.put("docFile", docFile);
-    	
+    public void generatePackageSummary(boolean graphsGenerated) {
+        DocFile docFile = docFileManager.getClassSummaryFile();
+        File file = docFile.getFile();
+
+        Map parameters = new HashMap();
+        parameters.put( "docFile", docFile );
+
         List list = docHelper.getPackages();
         //Remove All Classes
-        list.remove(0);
-        parameters.put("packageList", list );
+        list.remove( 0 );
+        parameters.put( "packageList", list );
         parameters.put( "graphsGenerated", Boolean.valueOf( graphsGenerated ) );
-        if(graphsGenerated) {
-        	StringBuffer sb = new StringBuffer();
-        	String fileName = "entities/entitygraph.cmap";
-        	appendFile( sb, fileName );
+        if ( graphsGenerated ) {
+            StringBuffer sb = new StringBuffer();
+            String fileName = "entities/entitygraph.cmap";
+            appendFile( sb, fileName );
             parameters.put( "entitygrapharea", sb );
         }
 
-    	processTemplate(parameters, FTL_ENTITIES_SUMMARY, file);
+        processTemplate( parameters, FTL_ENTITIES_SUMMARY, file );
     }
 
     /**
@@ -410,45 +473,43 @@ public class DocExporter extends AbstractExporter {
      */
     public void generateTablesDetails() {
         Iterator tables = getConfiguration().getTableMappings();
-        while (tables.hasNext() ) {
+        while ( tables.hasNext() ) {
             Table table = (Table) tables.next();
 
-            DocFile docFile = docFileManager.getTableDocFile(table);
-            if(docFile!=null) {
-            	File file = docFile.getFile();
+            DocFile docFile = docFileManager.getTableDocFile( table );
+            if ( docFile != null ) {
+                File file = docFile.getFile();
 
-            	Map parameters = new HashMap();
-            	parameters.put("docFile", docFile);
-            	parameters.put("table", table);
+                Map parameters = new HashMap();
+                parameters.put( "docFile", docFile );
+                parameters.put( "table", table );
 
-            	processTemplate(parameters, FTL_TABLES_TABLE, file);
+                processTemplate( parameters, FTL_TABLES_TABLE, file );
             }
         }
     }
-   
+
     /**
      * generates one html file for each class containing detail information of class
-     *
      */
-    public void generateEntitiesDetails(){
-    	Iterator classes = docHelper.getClasses().iterator();
-    	while(classes.hasNext()){
-    		POJOClass pcObj = (POJOClass)classes.next();  
-    		
-    		pcObj.getPropertiesForMinimalConstructor();		
-    		DocFile docFile = docFileManager.getEntityDocFile(pcObj);
-    		File file = docFile.getFile();
-    		
-    		Map parameters = new HashMap();
-    		parameters.put("docFile", docFile);
-    		parameters.put("class", pcObj);    		
-    		processTemplate(parameters, FTL_ENTITIES_ENTITY, file);
-    	}
+    public void generateEntitiesDetails() {
+        Iterator classes = docHelper.getClasses().iterator();
+        while ( classes.hasNext() ) {
+            POJOClass pcObj = (POJOClass) classes.next();
+
+            pcObj.getPropertiesForMinimalConstructor();
+            DocFile docFile = docFileManager.getEntityDocFile( pcObj );
+            File file = docFile.getFile();
+
+            Map parameters = new HashMap();
+            parameters.put( "docFile", docFile );
+            parameters.put( "class", pcObj );
+            processTemplate( parameters, FTL_ENTITIES_ENTITY, file );
+        }
     }
-    
+
     /**
      * Generates the html file containig list of packages (allpackages.html)
-     *
      */
     public void generateEntitiesAllPackagesList() {
         DocFile docFile = docFileManager.getAllPackagesDocFile();
@@ -456,78 +517,77 @@ public class DocExporter extends AbstractExporter {
         File file = docFile.getFile();
 
         Map parameters = new HashMap();
-        parameters.put("docFile", docFile);
+        parameters.put( "docFile", docFile );
         List list = docHelper.getPackages();
         //Remove All Classes
-        list.remove(0);
-        parameters.put("packageList", list );
+        list.remove( 0 );
+        parameters.put( "packageList", list );
 
-        processTemplate(parameters, FTL_ENTITIES_PACKAGE_LIST, file);
-    } 
-    
+        processTemplate( parameters, FTL_ENTITIES_PACKAGE_LIST, file );
+    }
+
     /**
      * Generates the html file containing list of classes (allclases.html)
-     *
      */
     public void generateEntitiesAllEntitiesList() {
         DocFile docFile = docFileManager.getAllEntitiesDocFile();
 
-        File file = docFile.getFile();   
+        File file = docFile.getFile();
 
         Map parameters = new HashMap();
-        parameters.put("docFile", docFile);
-        parameters.put("classList", docHelper.getClasses());  
+        parameters.put( "docFile", docFile );
+        parameters.put( "classList", docHelper.getClasses() );
 
-        processTemplate(parameters, FTL_ENTITIES_ENTITY_LIST, file);
+        processTemplate( parameters, FTL_ENTITIES_ENTITY_LIST, file );
     }
-    
+
     /**
      * generates the list of classes sepcific to package
-     *
      */
     public void generateEntitiesPackageEntityList() {
         Iterator packages = docHelper.getPackages().iterator();
 
-        while (packages.hasNext() ) {
+        while ( packages.hasNext() ) {
             String packageName = (String) packages.next();
-            
-            if(!packageName.equals(DocHelper.DEFAULT_NO_PACKAGE)){
-                DocFile docFile = docFileManager.getPackageEntityListDocFile(packageName);
+
+            if ( !packageName.equals( DocHelper.DEFAULT_NO_PACKAGE ) ) {
+                DocFile docFile = docFileManager.getPackageEntityListDocFile( packageName );
                 File file = docFile.getFile();
 
                 Map parameters = new HashMap();
-                parameters.put("docFile", docFile);
-                parameters.put("title", packageName);
-                parameters.put("classList", docHelper.getClasses(packageName));
-                processTemplate(parameters, FTL_ENTITIES_PERPACKAGE_ENTITY_LIST, file);
-            	
+                parameters.put( "docFile", docFile );
+                parameters.put( "title", packageName );
+                parameters.put( "classList", docHelper.getClasses( packageName ) );
+                processTemplate( parameters, FTL_ENTITIES_PERPACKAGE_ENTITY_LIST, file );
+
             }
 
         }
     }
-    
+
     /**
      * Generates the html file containing list of classes and interfaces for given package
-     *
      */
     public void generateEntitiesPackageDetailedInfo() {
-    	List packageList = docHelper.getPackages();
-    	packageList.remove(0);    	
+        List packageList = docHelper.getPackages();
+        packageList.remove( 0 );
         Iterator packages = packageList.iterator();
-        
-        while (packages.hasNext() ) {
+
+        while ( packages.hasNext() ) {
             String packageName = (String) packages.next();
 
-            DocFile summaryDocFile = docFileManager.getPackageSummaryDocFile(packageName);
+            DocFile summaryDocFile = docFileManager.getPackageSummaryDocFile( packageName );
             Map parameters = new HashMap();
-            parameters.put("docFile", summaryDocFile);
-            parameters.put("package", packageName);           
-            parameters.put("classList", docHelper.getClasses(packageName));                       
+            parameters.put( "docFile", summaryDocFile );
+            parameters.put( "package", packageName );
+            parameters.put( "classList", docHelper.getClasses( packageName ) );
 
-            processTemplate(parameters, FTL_ENTITIES_PACKAGE_SUMMARY,
-                    summaryDocFile.getFile() );
+            processTemplate(
+                    parameters, FTL_ENTITIES_PACKAGE_SUMMARY,
+                    summaryDocFile.getFile()
+            );
         }
-    }    
+    }
 
     /**
      * Generate a file with a list of all the schemas in the configuration.
@@ -538,10 +598,10 @@ public class DocExporter extends AbstractExporter {
         File file = docFile.getFile();
 
         Map parameters = new HashMap();
-        parameters.put("docFile", docFile);
-        parameters.put("schemaList", docHelper.getSchemas() );
+        parameters.put( "docFile", docFile );
+        parameters.put( "schemaList", docHelper.getSchemas() );
 
-        processTemplate(parameters, FTL_TABLES_SCHEMA_LIST, file);
+        processTemplate( parameters, FTL_TABLES_SCHEMA_LIST, file );
     }
 
     /**
@@ -553,28 +613,28 @@ public class DocExporter extends AbstractExporter {
         File file = docFile.getFile();
 
         Map parameters = new HashMap();
-        parameters.put("docFile", docFile);
-        parameters.put("tableList", docHelper.getTables() );
+        parameters.put( "docFile", docFile );
+        parameters.put( "tableList", docHelper.getTables() );
 
-        processTemplate(parameters, FTL_TABLES_TABLE_LIST, file);
+        processTemplate( parameters, FTL_TABLES_TABLE_LIST, file );
     }
 
     public void generateTablesSchemaTableList() {
         Iterator schemas = docHelper.getSchemas().iterator();
 
-        while (schemas.hasNext() ) {
+        while ( schemas.hasNext() ) {
             String schemaName = (String) schemas.next();
 
-            DocFile docFile = docFileManager.getSchemaTableListDocFile(schemaName);
+            DocFile docFile = docFileManager.getSchemaTableListDocFile( schemaName );
 
             File file = docFile.getFile();
 
             Map parameters = new HashMap();
-            parameters.put("docFile", docFile);
-            parameters.put("title", schemaName);
-            parameters.put("tableList", docHelper.getTables(schemaName) );
+            parameters.put( "docFile", docFile );
+            parameters.put( "title", schemaName );
+            parameters.put( "tableList", docHelper.getTables( schemaName ) );
 
-            processTemplate(parameters, FTL_TABLES_PERSCHEMA_TABLE_LIST, file);
+            processTemplate( parameters, FTL_TABLES_PERSCHEMA_TABLE_LIST, file );
         }
     }
 
@@ -584,47 +644,51 @@ public class DocExporter extends AbstractExporter {
      */
     public void generateTablesSchemaDetailedInfo() {
         Iterator schemas = docHelper.getSchemas().iterator();
-        while (schemas.hasNext() ) {
+        while ( schemas.hasNext() ) {
             String schemaName = (String) schemas.next();
 
-            DocFile summaryDocFile = docFileManager.getSchemaSummaryDocFile(schemaName);
+            DocFile summaryDocFile = docFileManager.getSchemaSummaryDocFile( schemaName );
 
             Map parameters = new HashMap();
-            parameters.put("docFile", summaryDocFile);
-            parameters.put("schema", schemaName);
+            parameters.put( "docFile", summaryDocFile );
+            parameters.put( "schema", schemaName );
 
-            processTemplate(parameters, FTL_TABLES_SCHEMA_SUMMARY,
-                    summaryDocFile.getFile() );
+            processTemplate(
+                    parameters, FTL_TABLES_SCHEMA_SUMMARY,
+                    summaryDocFile.getFile()
+            );
 
-            DocFile tableListDocFile = docFileManager.getSchemaSummaryDocFile(schemaName);
+            DocFile tableListDocFile = docFileManager.getSchemaSummaryDocFile( schemaName );
 
             parameters = new HashMap();
-            parameters.put("docFile", tableListDocFile);
-            parameters.put("schema", schemaName);
+            parameters.put( "docFile", tableListDocFile );
+            parameters.put( "schema", schemaName );
 
-            processTemplate(parameters, FTL_TABLES_SCHEMA_SUMMARY,
-                    tableListDocFile.getFile() );
-            
+            processTemplate(
+                    parameters, FTL_TABLES_SCHEMA_SUMMARY,
+                    tableListDocFile.getFile()
+            );
+
             //processTemplate( new HashMap(), templateName, outputFile );
         }
     }
 
     /**
      * Run templates.
-     * 
+     *
      * @param parameters the parameters to pass to the templates template.
      * @param templateName the template to use.
      * @param outputFile the output file.
      */
     protected void processTemplate(Map parameters, String templateName,
-            File outputFile) {
-    	
-    	TemplateProducer producer = new TemplateProducer(getTemplateHelper(), getArtifactCollector() );
-    	producer.produce(parameters, templateName, outputFile, templateName);
-     }
+                                   File outputFile) {
+
+        TemplateProducer producer = new TemplateProducer( getTemplateHelper(), getArtifactCollector() );
+        producer.produce( parameters, templateName, outputFile, templateName );
+    }
 
     public String getName() {
-    	return "hbm2doc";
+        return "hbm2doc";
     }
-       
+
 }

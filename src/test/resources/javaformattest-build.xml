@@ -23,71 +23,74 @@
   -->
 
 <project name="javaformattest">
-	<property name="build.dir" location="../../target/javaformattest" />
-	<property name="hibernate-libs" location="../../lib/testlibs" />
-	<property name="target.dir" location="../../target"/>
-	<property name="test-classes" location="${target.dir}/test-classes"/>
-	<property file="${test-classes}/hibernate.properties" />
-	<property name="lib.dir" location="../../lib"/>
-	<property file="${test-classes}/hibernate.properties" />
+    <property name="target.dir" location="target"/>
+    <property name="build.dir" location="${target.dir}/javaformattest"/>
+    <property name="lib.dir" location="lib"/>
+    <property name="hibernate-libs" location="${lib.dir}/testlibs"/>
+    <property name="test-classes" location="${target.dir}/test-classes"/>
+    <property file="${test-classes}/hibernate.properties"/>
 
+    <path id="tasks.classpath">
+        <pathelement path="${test-classes}"/>
+        <pathelement path="${target.dir}/classes"/>
 
+        <fileset dir="${hibernate-libs}">
+            <include name="**/*.jar"/>
+        </fileset>
 
-	<path id="tasks.classpath">
-		<pathelement path="${test-classes}" />
-		<pathelement path="${target.dir}/classes" />
+        <pathelement path="${lib.dir}/freemarker.jar"/>
 
-		<fileset dir="${hibernate-libs}">
-			<include name="**/*.jar" />
-		</fileset>
+        <fileset dir="${lib.dir}">
+            <include name="**/*eclipse*.jar"/>
+        </fileset>
+        <pathelement path="${lib.dir}/jdbc/h2.jar"/>
+    </path>
 
-		<pathelement path="${lib.dir}/freemarker.jar" />
-		
-		<fileset dir="${lib.dir}">
-			<include name="**/*eclipse*.jar" />
-		</fileset>
-		<pathelement path="${lib.dir}/jdbc/hsqldb.jar" />
-	</path>
-	
-	<target name="cleanup">
-		<delete dir="${build.dir}"/>
-	</target>
-	
-	<target name="prepare">
-		<copy todir="${build.dir}">
-		  <fileset dir="${test-classes}" includes="formatting/**/*"/>
-		</copy>
-	</target>
-	
-	<target name="fileset">		
-		<taskdef name="javaformatter" classname="org.hibernate.tool.ant.JavaFormatterTask" classpathref="tasks.classpath"/>
-				
-		<javaformatter> 
-		   <fileset dir="${build.dir}">
-		   	   <include name="formatting/**/*"/>
-		   	</fileset>
-		</javaformatter>
-	</target>
-	
-	<target name="configtest">		
-		<taskdef name="javaformatter" classname="org.hibernate.tool.ant.JavaFormatterTask" classpathref="tasks.classpath"/>
-				
-		<javaformatter configurationfile="${test-classes}/emptyconfig.properties"> 
-		   <fileset dir="${build.dir}">
-		   	   <include name="formatting/**/*"/>
-		   	</fileset>
-		</javaformatter>
-	</target>
-	
-	<target name="noconfigtest">		
-			<taskdef name="javaformatter" classname="org.hibernate.tool.ant.JavaFormatterTask" classpathref="tasks.classpath"/>
-					
-			<javaformatter> 
-			   <fileset dir="${build.dir}">
-			   	   <include name="formatting/**/*"/>
-			   	</fileset>
-			</javaformatter>
-	</target>
-		
+    <target name="cleanup">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <target name="prepare">
+        <copy todir="${build.dir}">
+            <fileset dir="${test-classes}" includes="formatting/**/*"/>
+        </copy>
+    </target>
+
+    <target name="fileset">
+        <taskdef name="javaformatter"
+                 classname="org.hibernate.tool.ant.JavaFormatterTask"
+                 classpathref="tasks.classpath"/>
+
+        <javaformatter>
+            <fileset dir="${build.dir}">
+                <include name="formatting/**/*"/>
+            </fileset>
+        </javaformatter>
+    </target>
+
+    <target name="configtest">
+        <taskdef name="javaformatter"
+                 classname="org.hibernate.tool.ant.JavaFormatterTask"
+                 classpathref="tasks.classpath"/>
+
+        <javaformatter configurationfile="${test-classes}/emptyconfig.properties">
+            <fileset dir="${build.dir}">
+                <include name="formatting/**/*"/>
+            </fileset>
+        </javaformatter>
+    </target>
+
+    <target name="noconfigtest">
+        <taskdef name="javaformatter"
+                 classname="org.hibernate.tool.ant.JavaFormatterTask"
+                 classpathref="tasks.classpath"/>
+
+        <javaformatter>
+            <fileset dir="${build.dir}">
+                <include name="formatting/**/*"/>
+            </fileset>
+        </javaformatter>
+    </target>
+
 
 </project>

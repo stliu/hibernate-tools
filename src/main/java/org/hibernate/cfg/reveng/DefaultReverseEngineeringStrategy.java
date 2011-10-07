@@ -1,3 +1,27 @@
+/*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
 package org.hibernate.cfg.reveng;
 
 import java.beans.Introspector;
@@ -21,341 +45,372 @@ import org.hibernate.mapping.Table;
 
 public class DefaultReverseEngineeringStrategy implements ReverseEngineeringStrategy {
 
-	static final private Log log = LogFactory.getLog(DefaultReverseEngineeringStrategy.class);
-	
-	private static Set AUTO_OPTIMISTICLOCK_COLUMNS;
+    static final private Log log = LogFactory.getLog( DefaultReverseEngineeringStrategy.class );
 
-	private ReverseEngineeringSettings settings = new ReverseEngineeringSettings(this);
+    private static Set<String> AUTO_OPTIMISTIC_LOCK_COLUMNS;
 
-	private ReverseEngineeringRuntimeInfo runtimeInfo;
-	static {
-		AUTO_OPTIMISTICLOCK_COLUMNS = new HashSet();
-		AUTO_OPTIMISTICLOCK_COLUMNS.add("version");
-		AUTO_OPTIMISTICLOCK_COLUMNS.add("timestamp");
-	}
-	
-		
-	public DefaultReverseEngineeringStrategy() {
-		super();
-	}
-	
-	public String columnToPropertyName(TableIdentifier table, String columnName) {
-		String decapitalize = Introspector.decapitalize( toUpperCamelCase(columnName) );
-		
-		return keywordCheck( decapitalize );
-	}
+    private ReverseEngineeringSettings settings = new ReverseEngineeringSettings( this );
 
-	private String keywordCheck(String possibleKeyword) {
-		if(ReverseEngineeringStrategyUtil.isReservedJavaKeyword(possibleKeyword)) {
-			possibleKeyword = possibleKeyword + "_";
-		}
-		return possibleKeyword;
-	}
-	
-	protected String toUpperCamelCase(String s) {
-		return ReverseEngineeringStrategyUtil.toUpperCamelCase(s);
-	}
-	
-	/**
-	 * Does some crude english pluralization
-	 * TODO: are the from/to names correct ?
-	 */
-    public String foreignKeyToCollectionName(String keyname, TableIdentifier fromTable, List fromColumns, TableIdentifier referencedTable, List referencedColumns, boolean uniqueReference) {
-		String propertyName = Introspector.decapitalize( StringHelper.unqualify( getRoot().tableToClassName( fromTable ) ) );
-		propertyName = pluralize( propertyName );
-		
-		if(!uniqueReference) {
-        	if(fromColumns!=null && fromColumns.size()==1) {
-        		String columnName = ( (Column) fromColumns.get(0) ).getName();
-        		propertyName = propertyName + "For" + toUpperCamelCase(columnName);
-        	} 
-        	else { // composite key or no columns at all safeguard
-        		propertyName = propertyName + "For" + toUpperCamelCase(keyname); 
-        	}
+    private ReverseEngineeringRuntimeInfo runtimeInfo;
+
+    static {
+        AUTO_OPTIMISTIC_LOCK_COLUMNS = new HashSet<String>();
+        AUTO_OPTIMISTIC_LOCK_COLUMNS.add( "version" );
+        AUTO_OPTIMISTIC_LOCK_COLUMNS.add( "timestamp" );
+    }
+
+    public String columnToPropertyName(TableIdentifier table, String columnName) {
+        String decapitalize = Introspector.decapitalize( toUpperCamelCase( columnName ) );
+
+        return keywordCheck( decapitalize );
+    }
+
+    private String keywordCheck(String possibleKeyword) {
+        if ( ReverseEngineeringStrategyUtil.isReservedJavaKeyword( possibleKeyword ) ) {
+            possibleKeyword = possibleKeyword + "_";
+        }
+        return possibleKeyword;
+    }
+
+    protected String toUpperCamelCase(String s) {
+        return ReverseEngineeringStrategyUtil.toUpperCamelCase( s );
+    }
+
+    /**
+     * Does some crude english pluralization
+     * TODO: are the from/to names correct ?
+     */
+    public String foreignKeyToCollectionName(String keyName, TableIdentifier fromTable, List fromColumns, TableIdentifier referencedTable, List referencedColumns, boolean uniqueReference) {
+        String propertyName = Introspector.decapitalize( StringHelper.unqualify( getRoot().tableToClassName( fromTable ) ) );
+        propertyName = pluralize( propertyName );
+
+        if ( !uniqueReference ) {
+            if ( fromColumns != null && fromColumns.size() == 1 ) {
+                String columnName = ( (Column) fromColumns.get( 0 ) ).getName();
+                propertyName = propertyName + "For" + toUpperCamelCase( columnName );
+            }
+            else { // composite key or no columns at all safeguard
+                propertyName = propertyName + "For" + toUpperCamelCase( keyName );
+            }
         }
         return propertyName;
     }
 
-	protected String pluralize(String singular) {
-		return ReverseEngineeringStrategyUtil.simplePluralize(singular);
-	}
+    protected String pluralize(String singular) {
+        return ReverseEngineeringStrategyUtil.simplePluralize( singular );
+    }
 
-	public String foreignKeyToInverseEntityName(String keyname,
-			TableIdentifier fromTable, List fromColumnNames,
-			TableIdentifier referencedTable, List referencedColumnNames,
-			boolean uniqueReference) {		
-		return foreignKeyToEntityName(keyname, fromTable, fromColumnNames, referencedTable, referencedColumnNames, uniqueReference);
-	}
-	
-	
-    public String foreignKeyToEntityName(String keyname, TableIdentifier fromTable, List fromColumnNames, TableIdentifier referencedTable, List referencedColumnNames, boolean uniqueReference) {
-        String propertyName = Introspector.decapitalize( StringHelper.unqualify( getRoot().tableToClassName(referencedTable) ) );
-        
-        if(!uniqueReference) {
-        	if(fromColumnNames!=null && fromColumnNames.size()==1) {
-        		String columnName = ( (Column) fromColumnNames.get(0) ).getName();
-        		propertyName = propertyName + "By" + toUpperCamelCase(columnName);
-        	} 
-        	else { // composite key or no columns at all safeguard
-        		propertyName = propertyName + "By" + toUpperCamelCase(keyname); 
-        	}
+    public String foreignKeyToInverseEntityName(String keyName,
+                                                TableIdentifier fromTable, List fromColumnNames,
+                                                TableIdentifier referencedTable, List referencedColumnNames,
+                                                boolean uniqueReference) {
+        return foreignKeyToEntityName(
+                keyName,
+                fromTable,
+                fromColumnNames,
+                referencedTable,
+                referencedColumnNames,
+                uniqueReference
+        );
+    }
+
+
+    public String foreignKeyToEntityName(String keyName, TableIdentifier fromTable, List fromColumnNames, TableIdentifier referencedTable, List referencedColumnNames, boolean uniqueReference) {
+        String propertyName = Introspector.decapitalize(
+                StringHelper.unqualify(
+                        getRoot().tableToClassName(
+                                referencedTable
+                        )
+                )
+        );
+
+        if ( !uniqueReference ) {
+            if ( fromColumnNames != null && fromColumnNames.size() == 1 ) {
+                String columnName = ( (Column) fromColumnNames.get( 0 ) ).getName();
+                propertyName = propertyName + "By" + toUpperCamelCase( columnName );
+            }
+            else { // composite key or no columns at all safeguard
+                propertyName = propertyName + "By" + toUpperCamelCase( keyName );
+            }
         }
-        
+
         return propertyName;
     }
-	
-	public String columnToHibernateTypeName(TableIdentifier table, String columnName, int sqlType, int length, int precision, int scale, boolean nullable, boolean generatedIdentifier) {
-		String preferredHibernateType = JDBCToHibernateTypeHelper.getPreferredHibernateType(sqlType, length, precision, scale, nullable, generatedIdentifier);
-		
-		String location = "<no info>";
-		if(log.isDebugEnabled()) {
-			String info = " t:" + JDBCToHibernateTypeHelper.getJDBCTypeName( sqlType ) + " l:" + length + " p:" + precision + " s:" + scale + " n:" + nullable + " id:" + generatedIdentifier;
-			if(table!=null) {
-				location = Table.qualify(table.getCatalog(), table.getSchema(), table.getName() ) + "." + columnName + info;
-			} else {
-				
-				location += " Column: " + columnName + info;
-			}			
-		}
-		if(preferredHibernateType==null) {
-			log.debug("No default type found for [" + location + "] falling back to [serializable]");
-			return "serializable";
-		} else {
-			log.debug("Default type found for [" + location + "] to [" + preferredHibernateType + "]");		
-			return preferredHibernateType;
-		}		
-	}
 
-	public boolean excludeTable(TableIdentifier ti) {		
-		return false;
-	}
-	
-	public boolean excludeColumn(TableIdentifier identifier, String columnName) {
-		return false;
-	}
+    public String columnToHibernateTypeName(TableIdentifier table, String columnName, int sqlType, int length, int precision, int scale, boolean nullable, boolean generatedIdentifier) {
+        String preferredHibernateType = JDBCToHibernateTypeHelper.getPreferredHibernateType(
+                sqlType,
+                length,
+                precision,
+                scale,
+                nullable,
+                generatedIdentifier
+        );
 
-	public String tableToClassName(TableIdentifier tableIdentifier) {
-		
-		String pkgName = settings.getDefaultPackageName();
-		String className = toUpperCamelCase( tableIdentifier.getName() );
-		
-		if(pkgName.length()>0) {			
-			return StringHelper.qualify(pkgName, className);
-		}
-		else {
-			return className;
-		}
-		
-	}
+        String location = "<no info>";
+        if ( log.isDebugEnabled() ) {
+            String info = " t:" + JDBCToHibernateTypeHelper.getJDBCTypeName( sqlType ) + " l:" + length + " p:" + precision + " s:" + scale + " n:" + nullable + " id:" + generatedIdentifier;
+            if ( table != null ) {
+                location = Table.qualify(
+                        table.getCatalog(),
+                        table.getSchema(),
+                        table.getName()
+                ) + "." + columnName + info;
+            }
+            else {
 
-	public List getForeignKeys(TableIdentifier referencedTable) {
-		return Collections.EMPTY_LIST;
-	}
-
-	public String getTableIdentifierStrategyName(TableIdentifier identifier) {
-		return null;
-	}
-
-	public Properties getTableIdentifierProperties(TableIdentifier identifier) {
-		return null;
-	}
-
-	public List getPrimaryKeyColumnNames(TableIdentifier identifier) {
-		return null;
-	}
-
-	public String classNameToCompositeIdName(String className) {
-		return className + "Id"; 
-	}
-
-	public void configure(ReverseEngineeringRuntimeInfo rti) {
-		this.runtimeInfo = rti;		
-	}
-
-	public void close() {
-		
-	}
-	
-	
-
-	/** Return explicit which column name should be used for optimistic lock */
-	public String getOptimisticLockColumnName(TableIdentifier identifier) {
-		return null;
-	}
-
-	public boolean useColumnForOptimisticLock(TableIdentifier identifier, String column) {
-		if(settings.getDetectOptimsticLock()) {
-			return AUTO_OPTIMISTICLOCK_COLUMNS.contains(column.toLowerCase())?true:false;
-		} else {
-			return false;
-		}
-	}
-
-	public List getSchemaSelections() {
-		return null;
-	}
-
-	public String tableToIdentifierPropertyName(TableIdentifier tableIdentifier) {
-		return null;
-	}
-
-	public String tableToCompositeIdName(TableIdentifier identifier) {
-		return null;
-	}
-
-	public boolean excludeForeignKeyAsCollection(String keyname, TableIdentifier fromTable, List fromColumns, TableIdentifier referencedTable, List referencedColumns) {
-		return !settings.createCollectionForForeignKey();		
-	}
-
-	public boolean excludeForeignKeyAsManytoOne(String keyname, TableIdentifier fromTable, List fromColumns, TableIdentifier referencedTable, List referencedColumns) {
-		return !settings.createManyToOneForForeignKey();
-	}
-
-	public boolean isForeignKeyCollectionInverse(String name, TableIdentifier foreignKeyTable, List columns, TableIdentifier foreignKeyReferencedTable, List referencedColumns) {
-		Table fkTable = getRuntimeInfo().getTable(foreignKeyTable);
-		if(fkTable==null) {
-			return true; // we don't know better
-		}
-		
-		if(isManyToManyTable(fkTable)) {
-		       // if the reference column is the first one then we are inverse.
-			   Column column = fkTable.getColumn(0);
-			   Column fkColumn = (Column) referencedColumns.get(0);
-			   if(fkColumn.equals(column)) {
-				   return true;   
-			   } else {
-				   return false;
-			   }
-		}
-		return true;
-	}
-
-	public boolean isForeignKeyCollectionLazy(String name, TableIdentifier foreignKeyTable, List columns, TableIdentifier foreignKeyReferencedTable, List referencedColumns) {
-		return true;
-	}
-
-	public void setSettings(ReverseEngineeringSettings settings) {
-		this.settings = settings;		
-	}
-
-	public boolean isOneToOne(ForeignKey foreignKey) {
-		if(settings.getDetectOneToOne()) {
-			// add support for non-PK associations
-			List fkColumns = foreignKey.getColumns();
-			List pkForeignTableColumns = null;
-			
-			if (foreignKey.getTable().hasPrimaryKey())
-				pkForeignTableColumns = foreignKey.getTable().getPrimaryKey().getColumns();
-
-			boolean equals =
-				fkColumns != null && pkForeignTableColumns != null
-				&& fkColumns.size() == pkForeignTableColumns.size();
-
-			Iterator columns = foreignKey.getColumnIterator();
-			while (equals && columns.hasNext()) {
-				Column fkColumn = (Column) columns.next();
-				equals = equals && pkForeignTableColumns.contains(fkColumn);
-			}
-
-			return equals;
-		} else {
-			return false;
-		}
+                location += " Column: " + columnName + info;
+            }
+        }
+        if ( preferredHibernateType == null ) {
+            log.debug( "No default type found for [" + location + "] falling back to [serializable]" );
+            return "serializable";
+        }
+        else {
+            log.debug( "Default type found for [" + location + "] to [" + preferredHibernateType + "]" );
+            return preferredHibernateType;
+        }
     }
 
-	public boolean isManyToManyTable(Table table) {
-		if(settings.getDetectManyToMany()) {
-			
-			// if the number of columns in the primary key is different 
-			// than the total number of columns then it can't be a middle table
-			PrimaryKey pk = table.getPrimaryKey();
-			if ( pk==null || pk.getColumns().size() != table.getColumnSpan() )
-				return false;
-			
-			Iterator foreignKeyIterator = table.getForeignKeyIterator();
-			List foreignKeys = new ArrayList();
-			
-			// if we have more than 2 fk, means we have more than 2 table implied
-			// in this table --> cannot be a simple many-to-many
-			while ( foreignKeyIterator.hasNext() ) {
-				ForeignKey fkey = (ForeignKey) foreignKeyIterator.next();
-				foreignKeys.add( fkey );
-				if(foreignKeys.size()>2) {
-					return false; // early exit if we have more than two fk.
-				}
-			}
-			if(foreignKeys.size()!=2) {
-				return false;
-			}
-			
-			// tests that all columns are implied in the fks
-			Set columns = new HashSet();
-			Iterator columnIterator = table.getColumnIterator();
-			while ( columnIterator.hasNext() ) {
-				Column column = (Column) columnIterator.next();
-				columns.add(column);
-			}
-			
-						
-			foreignKeyIterator = table.getForeignKeyIterator();
-			while ( !columns.isEmpty() && foreignKeyIterator.hasNext() ) {
-				ForeignKey element = (ForeignKey) foreignKeyIterator.next();				
-				columns.removeAll( element.getColumns() );				
-			}
-			// what if one of the columns is not the primary key?
-			
-			return columns.isEmpty();
-			
+    public boolean excludeTable(TableIdentifier ti) {
+        return false;
+    }
 
-			
-			
-			
-		} else {
-			return false;
-		}
-	}
+    public boolean excludeColumn(TableIdentifier identifier, String columnName) {
+        return false;
+    }
 
-	protected ReverseEngineeringStrategy getRoot() {
-		return settings.getRootStrategy();
-	}
-	
-	protected ReverseEngineeringRuntimeInfo getRuntimeInfo() {
-		return runtimeInfo;
-	}
-	
-	public String foreignKeyToManyToManyName(ForeignKey fromKey, TableIdentifier middleTable, ForeignKey toKey, boolean uniqueReference) {
-		String propertyName = Introspector.decapitalize( StringHelper.unqualify( getRoot().tableToClassName(TableIdentifier.create( toKey.getReferencedTable()) )) );
-		propertyName = pluralize( propertyName );
-		
-		if(!uniqueReference) {
-			//TODO: maybe use the middleTable name here ?
-        	if(toKey.getColumns()!=null && toKey.getColumns().size()==1) {
-        		String columnName = ( (Column) toKey.getColumns().get(0) ).getName();
-        		propertyName = propertyName + "For" + toUpperCamelCase(columnName);
-        	} 
-        	else { // composite key or no columns at all safeguard
-        		propertyName = propertyName + "For" + toUpperCamelCase(toKey.getName()); 
-        	}
+    public String tableToClassName(TableIdentifier tableIdentifier) {
+
+        String pkgName = settings.getDefaultPackageName();
+        String className = toUpperCamelCase( tableIdentifier.getName() );
+
+        if ( pkgName.length() > 0 ) {
+            return StringHelper.qualify( pkgName, className );
         }
-        return propertyName;      
-	}
+        else {
+            return className;
+        }
 
-	public Map tableToMetaAttributes(TableIdentifier tableIdentifier) {
-		return null;
-	}
+    }
 
-	public Map columnToMetaAttributes(TableIdentifier identifier, String column) {
-		return null;
-	}
+    public List getForeignKeys(TableIdentifier referencedTable) {
+        return Collections.EMPTY_LIST;
+    }
 
-	public AssociationInfo foreignKeyToAssociationInfo(ForeignKey foreignKey) {
-		return null;
-	}
+    public String getTableIdentifierStrategyName(TableIdentifier identifier) {
+        return null;
+    }
 
-	public AssociationInfo foreignKeyToInverseAssociationInfo(ForeignKey foreignKey) {
-		return null;
-	}
+    public Properties getTableIdentifierProperties(TableIdentifier identifier) {
+        return null;
+    }
 
-	
-	
+    public List getPrimaryKeyColumnNames(TableIdentifier identifier) {
+        return null;
+    }
+
+    public String classNameToCompositeIdName(String className) {
+        return className + "Id";
+    }
+
+    public void configure(ReverseEngineeringRuntimeInfo rti) {
+        this.runtimeInfo = rti;
+    }
+
+    public void close() {
+
+    }
+
+
+    /**
+     * Return explicit which column name should be used for optimistic lock
+     */
+    public String getOptimisticLockColumnName(TableIdentifier identifier) {
+        return null;
+    }
+
+    public boolean useColumnForOptimisticLock(TableIdentifier identifier, String column) {
+        if ( settings.getDetectOptimisticLock() ) {
+            return AUTO_OPTIMISTIC_LOCK_COLUMNS.contains( column.toLowerCase() ) ? true : false;
+        }
+        else {
+            return false;
+        }
+    }
+
+    public List getSchemaSelections() {
+        return null;
+    }
+
+    public String tableToIdentifierPropertyName(TableIdentifier tableIdentifier) {
+        return null;
+    }
+
+    public String tableToCompositeIdName(TableIdentifier identifier) {
+        return null;
+    }
+
+    public boolean excludeForeignKeyAsCollection(String keyname, TableIdentifier fromTable, List fromColumns, TableIdentifier referencedTable, List referencedColumns) {
+        return !settings.createCollectionForForeignKey();
+    }
+
+    public boolean excludeForeignKeyAsManytoOne(String keyname, TableIdentifier fromTable, List fromColumns, TableIdentifier referencedTable, List referencedColumns) {
+        return !settings.createManyToOneForForeignKey();
+    }
+
+    public boolean isForeignKeyCollectionInverse(String name, TableIdentifier foreignKeyTable, List columns, TableIdentifier foreignKeyReferencedTable, List referencedColumns) {
+        Table fkTable = getRuntimeInfo().getTable( foreignKeyTable );
+        if ( fkTable == null ) {
+            return true; // we don't know better
+        }
+
+        if ( isManyToManyTable( fkTable ) ) {
+            // if the reference column is the first one then we are inverse.
+            Column column = fkTable.getColumn( 0 );
+            Column fkColumn = (Column) referencedColumns.get( 0 );
+            if ( fkColumn.equals( column ) ) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean isForeignKeyCollectionLazy(String name, TableIdentifier foreignKeyTable, List columns, TableIdentifier foreignKeyReferencedTable, List referencedColumns) {
+        return true;
+    }
+
+    public void setSettings(ReverseEngineeringSettings settings) {
+        this.settings = settings;
+    }
+
+    public boolean isOneToOne(ForeignKey foreignKey) {
+        if ( settings.getDetectOneToOne() ) {
+            // add support for non-PK associations
+            List fkColumns = foreignKey.getColumns();
+            List pkForeignTableColumns = null;
+
+            if ( foreignKey.getTable().hasPrimaryKey() ) {
+                pkForeignTableColumns = foreignKey.getTable().getPrimaryKey().getColumns();
+            }
+
+            boolean equals =
+                    fkColumns != null && pkForeignTableColumns != null
+                            && fkColumns.size() == pkForeignTableColumns.size();
+
+            Iterator columns = foreignKey.getColumnIterator();
+            while ( equals && columns.hasNext() ) {
+                Column fkColumn = (Column) columns.next();
+                equals = equals && pkForeignTableColumns.contains( fkColumn );
+            }
+
+            return equals;
+        }
+        else {
+            return false;
+        }
+    }
+
+    public boolean isManyToManyTable(Table table) {
+        if ( settings.getDetectManyToMany() ) {
+
+            // if the number of columns in the primary key is different
+            // than the total number of columns then it can't be a middle table
+            PrimaryKey pk = table.getPrimaryKey();
+            if ( pk == null || pk.getColumns().size() != table.getColumnSpan() ) {
+                return false;
+            }
+
+            Iterator foreignKeyIterator = table.getForeignKeyIterator();
+            List foreignKeys = new ArrayList();
+
+            // if we have more than 2 fk, means we have more than 2 table implied
+            // in this table --> cannot be a simple many-to-many
+            while ( foreignKeyIterator.hasNext() ) {
+                ForeignKey fkey = (ForeignKey) foreignKeyIterator.next();
+                foreignKeys.add( fkey );
+                if ( foreignKeys.size() > 2 ) {
+                    return false; // early exit if we have more than two fk.
+                }
+            }
+            if ( foreignKeys.size() != 2 ) {
+                return false;
+            }
+
+            // tests that all columns are implied in the fks
+            Set columns = new HashSet();
+            Iterator columnIterator = table.getColumnIterator();
+            while ( columnIterator.hasNext() ) {
+                Column column = (Column) columnIterator.next();
+                columns.add( column );
+            }
+
+
+            foreignKeyIterator = table.getForeignKeyIterator();
+            while ( !columns.isEmpty() && foreignKeyIterator.hasNext() ) {
+                ForeignKey element = (ForeignKey) foreignKeyIterator.next();
+                columns.removeAll( element.getColumns() );
+            }
+            // what if one of the columns is not the primary key?
+
+            return columns.isEmpty();
+
+
+        }
+        else {
+            return false;
+        }
+    }
+
+    protected ReverseEngineeringStrategy getRoot() {
+        return settings.getRootStrategy();
+    }
+
+    protected ReverseEngineeringRuntimeInfo getRuntimeInfo() {
+        return runtimeInfo;
+    }
+
+    public String foreignKeyToManyToManyName(ForeignKey fromKey, TableIdentifier middleTable, ForeignKey toKey, boolean uniqueReference) {
+        String propertyName = Introspector.decapitalize(
+                StringHelper.unqualify(
+                        getRoot().tableToClassName(
+                                TableIdentifier.create( toKey.getReferencedTable() )
+                        )
+                )
+        );
+        propertyName = pluralize( propertyName );
+
+        if ( !uniqueReference ) {
+            //TODO: maybe use the middleTable name here ?
+            if ( toKey.getColumns() != null && toKey.getColumns().size() == 1 ) {
+                String columnName = ( (Column) toKey.getColumns().get( 0 ) ).getName();
+                propertyName = propertyName + "For" + toUpperCamelCase( columnName );
+            }
+            else { // composite key or no columns at all safeguard
+                propertyName = propertyName + "For" + toUpperCamelCase( toKey.getName() );
+            }
+        }
+        return propertyName;
+    }
+
+    public Map tableToMetaAttributes(TableIdentifier tableIdentifier) {
+        return null;
+    }
+
+    public Map columnToMetaAttributes(TableIdentifier identifier, String column) {
+        return null;
+    }
+
+    public AssociationInfo foreignKeyToAssociationInfo(ForeignKey foreignKey) {
+        return null;
+    }
+
+    public AssociationInfo foreignKeyToInverseAssociationInfo(ForeignKey foreignKey) {
+        return null;
+    }
+
+
 }

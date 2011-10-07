@@ -1,4 +1,28 @@
 /*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
+/*
  * Created on 13-Feb-2005
  *
  */
@@ -28,179 +52,184 @@ import org.hibernate.internal.util.ReflectHelper;
 
 /**
  * @author max
- *
  */
 public class ConfigurationTask extends Task {
 
-	private List fileSets = new ArrayList();
-	private Configuration cfg;
-	private File configurationFile;
-	private File propertyFile;
-	protected String entityResolver;
-	private String namingStrategy;
-	
-	public ConfigurationTask() {
-		setDescription("Standard Configuration");
-	}
-	
-	public void addConfiguredFileSet(FileSet fileSet) {
-		fileSets.add(fileSet);	 	
-	}
+    private List fileSets = new ArrayList();
+    private Configuration cfg;
+    private File configurationFile;
+    private File propertyFile;
+    protected String entityResolver;
+    private String namingStrategy;
 
-	/**
-	 * @return
-	 */
-	public final Configuration getConfiguration() {
-		if(cfg==null) {
-			cfg = createConfiguration();
-			doConfiguration(cfg);
-			cfg.buildMappings(); // needed otherwise not all assocations are made!
-		}
-		return cfg;
-	}
+    public ConfigurationTask() {
+        setDescription( "Standard Configuration" );
+    }
 
-	protected Configuration createConfiguration() {
-		return new Configuration();
-	}
-	
-	/**
-	 * 
-	 */
-	protected void doConfiguration(Configuration configuration) {	
-		validateParameters();		
-		
-		if (entityResolver != null) {
-			try {
-				Class resolver = ReflectHelper.classForName( entityResolver, this.getClass() );
-				Object object = resolver.newInstance();
-				
-				configuration.setEntityResolver((EntityResolver) object);
-				getProject().log("Using " + entityResolver + " as entity resolver");
-			}
-			catch (Exception e) {
-				throw new BuildException("Could not create or find " + entityResolver + " class to use for entity resolvement");
-			}			
-		}
-		if (namingStrategy != null) {
-			try {
-				Class resolver = ReflectHelper.classForName(namingStrategy, this.getClass());
-				Object object = resolver.newInstance();
-				
-				configuration.setNamingStrategy((NamingStrategy) object);
-				getProject().log("Using " + namingStrategy + " as naming strategy");
-			}
-			catch (Exception e) {
-				throw new BuildException("Could not create or find " + namingStrategy + " class to use for naming strategy");
-			}			
-		}
-		
-		if (configurationFile != null) configuration.configure( configurationFile );
-		addMappings(getFiles() );
-		Properties p = getProperties();
-		if(p!=null) {		
-			Properties overrides = new Properties();
-			overrides.putAll(configuration.getProperties());
-			overrides.putAll(p);
-			configuration.setProperties(overrides);
-		}		
-	}
+    public void addConfiguredFileSet(FileSet fileSet) {
+        fileSets.add( fileSet );
+    }
 
-	protected Properties getProperties() {
-		if (propertyFile!=null) { 
-			Properties properties = new Properties(); // TODO: should we "inherit" from the ant projects properties ?
-			try {
-				properties.load(new FileInputStream(propertyFile) );
-				return properties;
-			} 
-			catch (FileNotFoundException e) {
-				throw new BuildException(propertyFile + " not found.",e);					
-			} 
-			catch (IOException e) {
-				throw new BuildException("Problem while loading " + propertyFile,e);				
-			}		
-		} else {
-			return null;
-		}
-	}
-	
-	
-	protected void validateParameters() throws BuildException {
-				// noop
-	}
+    /**
+     * @return
+     */
+    public final Configuration getConfiguration() {
+        if ( cfg == null ) {
+            cfg = createConfiguration();
+            doConfiguration( cfg );
+            cfg.buildMappings(); // needed otherwise not all assocations are made!
+        }
+        return cfg;
+    }
 
-	/**
-	 * @param files
-	 */
-	private void addMappings(File[] files) {
-		for (int i = 0; i < files.length; i++) {
-			File filename = files[i];
-			boolean added = addFile(filename);
-			if(!added) {
-				log(filename + " not added to Configuration", Project.MSG_VERBOSE);
-			}
-		}		
-	}
+    protected Configuration createConfiguration() {
+        return new Configuration();
+    }
 
-	/**
-	 * @param filename
-	 */
-	protected boolean addFile(File filename) {
-		try {
-			if ( filename.getName().endsWith(".jar") ) {
-				cfg.addJar( filename );
-				return true;
-			}
-			else {
-				cfg.addFile(filename);
-				return true;
-			}
-		} 
-		catch (HibernateException he) {
-			throw new BuildException("Failed in building configuration when adding " + filename, he);
-		}
-	}
+    /**
+     *
+     */
+    protected void doConfiguration(Configuration configuration) {
+        validateParameters();
 
-	private File[] getFiles() {
+        if ( entityResolver != null ) {
+            try {
+                Class resolver = ReflectHelper.classForName( entityResolver, this.getClass() );
+                Object object = resolver.newInstance();
 
-		List files = new LinkedList();
-		for ( Iterator i = fileSets.iterator(); i.hasNext(); ) {
+                configuration.setEntityResolver( (EntityResolver) object );
+                getProject().log( "Using " + entityResolver + " as entity resolver" );
+            }
+            catch ( Exception e ) {
+                throw new BuildException( "Could not create or find " + entityResolver + " class to use for entity resolvement" );
+            }
+        }
+        if ( namingStrategy != null ) {
+            try {
+                Class resolver = ReflectHelper.classForName( namingStrategy, this.getClass() );
+                Object object = resolver.newInstance();
 
-			FileSet fs = (FileSet) i.next();
-			DirectoryScanner ds = fs.getDirectoryScanner( getProject() );
+                configuration.setNamingStrategy( (NamingStrategy) object );
+                getProject().log( "Using " + namingStrategy + " as naming strategy" );
+            }
+            catch ( Exception e ) {
+                throw new BuildException( "Could not create or find " + namingStrategy + " class to use for naming strategy" );
+            }
+        }
 
-			String[] dsFiles = ds.getIncludedFiles();
-			for (int j = 0; j < dsFiles.length; j++) {
-				File f = new File(dsFiles[j]);
-				if ( !f.isFile() ) {
-					f = new File( ds.getBasedir(), dsFiles[j] );
-				}
+        if ( configurationFile != null ) {
+            configuration.configure( configurationFile );
+        }
+        addMappings( getFiles() );
+        Properties p = getProperties();
+        if ( p != null ) {
+            Properties overrides = new Properties();
+            overrides.putAll( configuration.getProperties() );
+            overrides.putAll( p );
+            configuration.setProperties( overrides );
+        }
+    }
 
-				files.add( f );
-			}
-		}
+    protected Properties getProperties() {
+        if ( propertyFile != null ) {
+            Properties properties = new Properties(); // TODO: should we "inherit" from the ant projects properties ?
+            try {
+                properties.load( new FileInputStream( propertyFile ) );
+                return properties;
+            }
+            catch ( FileNotFoundException e ) {
+                throw new BuildException( propertyFile + " not found.", e );
+            }
+            catch ( IOException e ) {
+                throw new BuildException( "Problem while loading " + propertyFile, e );
+            }
+        }
+        else {
+            return null;
+        }
+    }
 
-		return (File[]) files.toArray(new File[files.size()]);
-	}
 
-	
-	public File getConfigurationFile() {
-		return configurationFile;
-	}
-	public void setConfigurationFile(File configurationFile) {
-		this.configurationFile = configurationFile;
-	}
-	public File getPropertyFile() {
-		return propertyFile;
-	}
-	public void setPropertyFile(File propertyFile) {
-		this.propertyFile = propertyFile;
-	}
-	
-	public void setEntityResolver(String entityResolverName) {
-		this.entityResolver = entityResolverName;
-	}
-	
-	public void setNamingStrategy(String namingStrategy) {
-		this.namingStrategy = namingStrategy;
-	}
+    protected void validateParameters() throws BuildException {
+        // noop
+    }
+
+    /**
+     * @param files
+     */
+    private void addMappings(File[] files) {
+        for ( int i = 0; i < files.length; i++ ) {
+            File filename = files[i];
+            boolean added = addFile( filename );
+            if ( !added ) {
+                log( filename + " not added to Configuration", Project.MSG_VERBOSE );
+            }
+        }
+    }
+
+    /**
+     * @param filename
+     */
+    protected boolean addFile(File filename) {
+        try {
+            if ( filename.getName().endsWith( ".jar" ) ) {
+                cfg.addJar( filename );
+                return true;
+            }
+            else {
+                cfg.addFile( filename );
+                return true;
+            }
+        }
+        catch ( HibernateException he ) {
+            throw new BuildException( "Failed in building configuration when adding " + filename, he );
+        }
+    }
+
+    private File[] getFiles() {
+
+        List files = new LinkedList();
+        for ( Iterator i = fileSets.iterator(); i.hasNext(); ) {
+
+            FileSet fs = (FileSet) i.next();
+            DirectoryScanner ds = fs.getDirectoryScanner( getProject() );
+
+            String[] dsFiles = ds.getIncludedFiles();
+            for ( int j = 0; j < dsFiles.length; j++ ) {
+                File f = new File( dsFiles[j] );
+                if ( !f.isFile() ) {
+                    f = new File( ds.getBasedir(), dsFiles[j] );
+                }
+
+                files.add( f );
+            }
+        }
+
+        return (File[]) files.toArray( new File[files.size()] );
+    }
+
+
+    public File getConfigurationFile() {
+        return configurationFile;
+    }
+
+    public void setConfigurationFile(File configurationFile) {
+        this.configurationFile = configurationFile;
+    }
+
+    public File getPropertyFile() {
+        return propertyFile;
+    }
+
+    public void setPropertyFile(File propertyFile) {
+        this.propertyFile = propertyFile;
+    }
+
+    public void setEntityResolver(String entityResolverName) {
+        this.entityResolver = entityResolverName;
+    }
+
+    public void setNamingStrategy(String namingStrategy) {
+        this.namingStrategy = namingStrategy;
+    }
 }

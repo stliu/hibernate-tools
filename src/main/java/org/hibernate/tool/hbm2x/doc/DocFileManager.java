@@ -1,3 +1,27 @@
+/*
+ * Hibernate, Relational Persistence for Idiomatic Java
+ *
+ * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
+ * indicated by the @author tags or express copyright attribution
+ * statements applied by the authors.  All third-party contributions are
+ * distributed under license by Red Hat Inc.
+ *
+ * This copyrighted material is made available to anyone wishing to use, modify,
+ * copy, or redistribute it subject to the terms and conditions of the GNU
+ * Lesser General Public License, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this distribution; if not, write to:
+ * Free Software Foundation, Inc.
+ * 51 Franklin Street, Fifth Floor
+ * Boston, MA  02110-1301  USA
+ */
+
 package org.hibernate.tool.hbm2x.doc;
 
 import java.io.File;
@@ -14,12 +38,12 @@ import org.hibernate.tool.hbm2x.pojo.POJOClass;
 /**
  * Class used to manage the files created during the documentation generation
  * process. This manager is needed to manage references between files.
- * 
+ *
  * @author Ricardo C. Moral
  * @author <a href="mailto:abhayani@jboss.org">Amit Bhayani</a>
  */
 public class DocFileManager {
-	
+
     /**
      * Root Documentation Folder.
      */
@@ -39,7 +63,7 @@ public class DocFileManager {
      * The Hibernate image.
      */
     private DocFile hibernateImageDocFile;
-    
+
     /**
      * The extends image.
      */
@@ -54,27 +78,27 @@ public class DocFileManager {
      * Root Folder for the Table documentation.
      */
     private DocFolder rootTablesDocFolder;
-    
+
     /**
      * Root Folder for Class doccumentation
      */
     private DocFolder rootEntitiesDocFolder;
-    
+
     /**
      * Class index DocFile
      */
     private DocFile classIndexDocFile;
-    
+
     /**
      * Class Summary DocFile
      */
     private DocFile entitySummaryDocFile;
-    
+
     /**
      * All packages DocFile allpackages.html
      */
     private DocFile allPackagesDocFile;
-    
+
     /**
      * All classes DocFile allclases.html
      */
@@ -105,9 +129,9 @@ public class DocFileManager {
      * the values are the DocFile instances.
      */
     private Map tableDocFiles = new HashMap();
-    
+
     /**
-     * Map with the DocFile for classes. The keys are the POJOClass objects and 
+     * Map with the DocFile for classes. The keys are the POJOClass objects and
      * the values are the DocFile instances.
      */
     private Map entityDocFiles = new HashMap();
@@ -116,7 +140,7 @@ public class DocFileManager {
      * Map with the schema summary DocFiles keyed by Schema FQN.
      */
     private Map schemaSummaryDocFiles = new HashMap();
-    
+
     /**
      * Map with the package summary DocFiles keyed by package name
      */
@@ -126,114 +150,120 @@ public class DocFileManager {
      * Map with the schema table lists DocFiles keyed by Schema FQN.
      */
     private Map schemaTableListDocFiles = new HashMap();
-    
+
     /**
      * Map with package class lists DocFiles keyed by package name
      */
     private Map packageEntityListDocFile = new HashMap();
 
     public DocFolder getRootDocFolder() {
-		return rootDocFolder;
-	}
-    
+        return rootDocFolder;
+    }
+
     /**
      * Constructor.
-     * 
+     *
      * @param docHelper the doc helper.
      * @param pRootFolder the root folder for the documentation.
      */
     public DocFileManager(DocHelper docHelper, File pRootFolder) {
 
-        super();        
+        super();
 
-        rootDocFolder = new DocFolder(pRootFolder);
+        rootDocFolder = new DocFolder( pRootFolder );
 
-        mainIndexDocFile = new DocFile("index.html", rootDocFolder);
+        mainIndexDocFile = new DocFile( "index.html", rootDocFolder );
 
-        assetsDocFolder = new DocFolder("assets", rootDocFolder);
+        assetsDocFolder = new DocFolder( "assets", rootDocFolder );
 
-        hibernateImageDocFile = new DocFile("hibernate_logo.gif",
-                assetsDocFolder);
-        
-        extendsImageDocFile = new DocFile("inherit.gif", assetsDocFolder);
+        hibernateImageDocFile = new DocFile(
+                "hibernate_logo.gif",
+                assetsDocFolder
+        );
 
-        cssStylesDocFile = new DocFile("doc-style.css", assetsDocFolder);
-        
-        rootEntitiesDocFolder = new DocFolder("entities", rootDocFolder);
-        classIndexDocFile = new DocFile("index.html", rootEntitiesDocFolder);
-        entitySummaryDocFile = new DocFile("summary.html", rootEntitiesDocFolder);
-        allPackagesDocFile = new DocFile("allpackages.html", rootEntitiesDocFolder);
-        allEntitiesDocFile = new DocFile("allentities.html", rootEntitiesDocFolder);
-        
+        extendsImageDocFile = new DocFile( "inherit.gif", assetsDocFolder );
 
-        rootTablesDocFolder = new DocFolder("tables", rootDocFolder);
+        cssStylesDocFile = new DocFile( "doc-style.css", assetsDocFolder );
 
-        tableIndexDocFile = new DocFile("index.html", rootTablesDocFolder);
+        rootEntitiesDocFolder = new DocFolder( "entities", rootDocFolder );
+        classIndexDocFile = new DocFile( "index.html", rootEntitiesDocFolder );
+        entitySummaryDocFile = new DocFile( "summary.html", rootEntitiesDocFolder );
+        allPackagesDocFile = new DocFile( "allpackages.html", rootEntitiesDocFolder );
+        allEntitiesDocFile = new DocFile( "allentities.html", rootEntitiesDocFolder );
 
-        tableSummaryDocFile = new DocFile("summary.html", rootTablesDocFolder);
 
-        allSchemasDocFile = new DocFile("allschemas.html", rootTablesDocFolder);
+        rootTablesDocFolder = new DocFolder( "tables", rootDocFolder );
 
-        allTablesDocFile = new DocFile("alltables.html", rootTablesDocFolder);
+        tableIndexDocFile = new DocFile( "index.html", rootTablesDocFolder );
+
+        tableSummaryDocFile = new DocFile( "summary.html", rootTablesDocFolder );
+
+        allSchemasDocFile = new DocFile( "allschemas.html", rootTablesDocFolder );
+
+        allTablesDocFile = new DocFile( "alltables.html", rootTablesDocFolder );
 
         Map schemaFolders = new HashMap();
-        
+
         Iterator packages = docHelper.getPackages().iterator();
 
-        while(packages.hasNext()){
-        	String packageName = (String)packages.next();
-        	DocFolder packageFolder = null;
-        	DocFolder theRoot = rootEntitiesDocFolder;
-        	if(!packageName.equals(DocHelper.DEFAULT_NO_PACKAGE)){
-        		String[] packagesArr = packageName.split("\\.");
-        		
-        		for(int count = 0 ; count < packagesArr.length ; count++){
-        			packageFolder = new DocFolder(packagesArr[count], theRoot);
-        			theRoot = packageFolder;
-        		}
-                
-            	DocFile packageSummaryDocFile = new DocFile("summary.html", packageFolder);
-            	packageSummaryDocFiles.put(packageName, packageSummaryDocFile);
-            	
-            	DocFile classListDocFile = new DocFile("entities.html", packageFolder);
-            	packageEntityListDocFile.put(packageName, classListDocFile);            	
-        	}
-        	else{
-        		packageFolder = rootEntitiesDocFolder;
-        	}
-        	
-        	Iterator classes = docHelper.getClasses(packageName).iterator();
-        	while(classes.hasNext()){
-        		POJOClass pc = (POJOClass)classes.next();
-        		String classFileName = pc.getDeclarationName();        		
-        		classFileName = classFileName + ".html";
-        		DocFile classDocFile = new DocFile(classFileName, packageFolder);        		
-        		entityDocFiles.put(pc, classDocFile);
-        	}        	
+        while ( packages.hasNext() ) {
+            String packageName = (String) packages.next();
+            DocFolder packageFolder = null;
+            DocFolder theRoot = rootEntitiesDocFolder;
+            if ( !packageName.equals( DocHelper.DEFAULT_NO_PACKAGE ) ) {
+                String[] packagesArr = packageName.split( "\\." );
+
+                for ( int count = 0; count < packagesArr.length; count++ ) {
+                    packageFolder = new DocFolder( packagesArr[count], theRoot );
+                    theRoot = packageFolder;
+                }
+
+                DocFile packageSummaryDocFile = new DocFile( "summary.html", packageFolder );
+                packageSummaryDocFiles.put( packageName, packageSummaryDocFile );
+
+                DocFile classListDocFile = new DocFile( "entities.html", packageFolder );
+                packageEntityListDocFile.put( packageName, classListDocFile );
+            }
+            else {
+                packageFolder = rootEntitiesDocFolder;
+            }
+
+            Iterator classes = docHelper.getClasses( packageName ).iterator();
+            while ( classes.hasNext() ) {
+                POJOClass pc = (POJOClass) classes.next();
+                String classFileName = pc.getDeclarationName();
+                classFileName = classFileName + ".html";
+                DocFile classDocFile = new DocFile( classFileName, packageFolder );
+                entityDocFiles.put( pc, classDocFile );
+            }
         }
 
         Iterator schemas = docHelper.getSchemas().iterator();
-        while (schemas.hasNext() ) {
+        while ( schemas.hasNext() ) {
             String schemaName = (String) schemas.next();
-            DocFolder schemaFolder = new DocFolder(schemaName,
-                    rootTablesDocFolder);
-            schemaFolders.put(schemaName, schemaFolder);
-            DocFile schemaSummaryDocFile = new DocFile("summary.html",
-                    schemaFolder);
-            schemaSummaryDocFiles.put(schemaName, schemaSummaryDocFile);
-            DocFile tableListDocFile = new DocFile("tables.html", schemaFolder);
-            schemaTableListDocFiles.put(schemaName, tableListDocFile);
+            DocFolder schemaFolder = new DocFolder(
+                    schemaName,
+                    rootTablesDocFolder
+            );
+            schemaFolders.put( schemaName, schemaFolder );
+            DocFile schemaSummaryDocFile = new DocFile(
+                    "summary.html",
+                    schemaFolder
+            );
+            schemaSummaryDocFiles.put( schemaName, schemaSummaryDocFile );
+            DocFile tableListDocFile = new DocFile( "tables.html", schemaFolder );
+            schemaTableListDocFiles.put( schemaName, tableListDocFile );
 
-            Iterator tables = docHelper.getTables(schemaName).iterator();
+            Iterator tables = docHelper.getTables( schemaName ).iterator();
 
-            while (tables.hasNext() ) {
+            while ( tables.hasNext() ) {
                 Table table = (Table) tables.next();
-                if(table.isPhysicalTable()) { 
-                	String tableFileName = table.getName() + ".html";
+                if ( table.isPhysicalTable() ) {
+                    String tableFileName = table.getName() + ".html";
 
-                	DocFile tableDocFile = new DocFile(tableFileName, schemaFolder);
+                    DocFile tableDocFile = new DocFile( tableFileName, schemaFolder );
 
-                	tableDocFiles.put(table, tableDocFile);
+                    tableDocFiles.put( table, tableDocFile );
                 }
             }
         }
@@ -241,7 +271,7 @@ public class DocFileManager {
 
     /**
      * Returns the DocFolder for the helper files.
-     * 
+     *
      * @return the value.
      */
     public DocFolder getAssetsDocFolder() {
@@ -251,7 +281,7 @@ public class DocFileManager {
 
     /**
      * Returns the DocFile for the CSS definitions.
-     * 
+     *
      * @return the value.
      */
     public DocFile getCssStylesDocFile() {
@@ -261,17 +291,17 @@ public class DocFileManager {
 
     /**
      * Returns the DocFile for the Hibernate Image.
-     * 
+     *
      * @return the value.
      */
     public DocFile getHibernateImageDocFile() {
 
         return hibernateImageDocFile;
     }
-    
+
     /**
      * Returns the DocFile for the extends Image.
-     * 
+     *
      * @return the value.
      */
     public DocFile getExtendsImageDocFile() {
@@ -281,7 +311,7 @@ public class DocFileManager {
 
     /**
      * Returns the DocFile for the main index.
-     * 
+     *
      * @return the value.
      */
     public DocFile getMainIndexDocFile() {
@@ -291,58 +321,64 @@ public class DocFileManager {
 
     /**
      * Return the table index DocFile.
-     * 
+     *
      * @return the table index DocFile.
      */
     public DocFile getTableIndexDocFile() {
         return tableIndexDocFile;
     }
-    
+
     /**
      * Returns the class index DocFile
+     *
      * @return class index DocFile
      */
-    public DocFile getClassIndexDocFile(){
-    	return classIndexDocFile;
+    public DocFile getClassIndexDocFile() {
+        return classIndexDocFile;
     }
-    
+
     /**
      * Returns the summary index DocFile
+     *
      * @return summary index DocFile
      */
-    public DocFile getClassSummaryFile(){
-    	return entitySummaryDocFile;
+    public DocFile getClassSummaryFile() {
+        return entitySummaryDocFile;
     }
-    
+
     /**
      * Returns the DocFile responsible for generating allpackages.html
+     *
      * @return DocFile
      */
-    public DocFile getAllPackagesDocFile(){
-    	return allPackagesDocFile;
+    public DocFile getAllPackagesDocFile() {
+        return allPackagesDocFile;
     }
-    
+
     /**
      * Returns the DocFile responsible for generating allclasses.html
+     *
      * @return
      */
-    public DocFile getAllEntitiesDocFile(){
-    	return allEntitiesDocFile;
+    public DocFile getAllEntitiesDocFile() {
+        return allEntitiesDocFile;
     }
-    
+
     /**
-     * Returns the DocFile responsible to generate classes.html corresponding to packageName passed 
+     * Returns the DocFile responsible to generate classes.html corresponding to packageName passed
+     *
      * @param packageName Package name which acts as key to get DocFile value object from packageEntityListDocFile
+     *
      * @return DocFile for classes.html
      */
-    public DocFile getPackageEntityListDocFile(String packageName){
-    	return (DocFile)packageEntityListDocFile.get(packageName);
-    	
+    public DocFile getPackageEntityListDocFile(String packageName) {
+        return (DocFile) packageEntityListDocFile.get( packageName );
+
     }
 
     /**
      * Return the table summary DocFile.
-     * 
+     *
      * @return the table summary DocFile.
      */
     public DocFile getTableSummaryDocFile() {
@@ -351,7 +387,7 @@ public class DocFileManager {
 
     /**
      * Return the all schemas DocFile.
-     * 
+     *
      * @return the all schemas DocFile.
      */
     public DocFile getAllSchemasDocFile() {
@@ -360,7 +396,7 @@ public class DocFileManager {
 
     /**
      * Return the all tables DocFile.
-     * 
+     *
      * @return the all tables DocFile.
      */
     public DocFile getAllTablesDocFile() {
@@ -369,115 +405,120 @@ public class DocFileManager {
 
     /**
      * Return the DocFile for the specified Table.
-     * 
+     *
      * @param table the Table.
-     * 
+     *
      * @return the DocFile.
      */
     public DocFile getTableDocFile(Table table) {
-        DocFile docFile = (DocFile) tableDocFiles.get(table);
-		return docFile;
+        DocFile docFile = (DocFile) tableDocFiles.get( table );
+        return docFile;
     }
-    
-    
+
+
     /**
      * Get the DocFile corresponding to POJOClass. But if the POJOClass is ComponentPOJO, it is created on fly
      * and we are not implementing .equals method hence get by getQualifiedDeclarationName.
+     *
      * @param pc DocFile corresponding to this POJOClass
+     *
      * @return DocFile
      */
-    public DocFile getEntityDocFileByDeclarationName(POJOClass pc){
-    	DocFile df = getEntityDocFile(pc);
-    	String pcQualifiedDeclarationName = pc.getQualifiedDeclarationName();
-    	String pojoClassQualifiedDeclarationName ;
-    	//TODO Can we implement equals method in BasicPOJO to avoid this loop?
-    	if(df == null){
-    		Iterator itr = entityDocFiles.keySet().iterator();
-    		while(itr.hasNext()){
-    			POJOClass pojoClass = (POJOClass)itr.next();
-    			pojoClassQualifiedDeclarationName = pojoClass.getQualifiedDeclarationName();
-    			
-    			if( pcQualifiedDeclarationName.equals(pojoClassQualifiedDeclarationName )){
-    				df = (DocFile)entityDocFiles.get(pojoClass);
-    				break;
-    			}
-    		}
-    			
-    		
-    		
-    	}
-    	return df;
-    }    
-    
+    public DocFile getEntityDocFileByDeclarationName(POJOClass pc) {
+        DocFile df = getEntityDocFile( pc );
+        String pcQualifiedDeclarationName = pc.getQualifiedDeclarationName();
+        String pojoClassQualifiedDeclarationName;
+        //TODO Can we implement equals method in BasicPOJO to avoid this loop?
+        if ( df == null ) {
+            Iterator itr = entityDocFiles.keySet().iterator();
+            while ( itr.hasNext() ) {
+                POJOClass pojoClass = (POJOClass) itr.next();
+                pojoClassQualifiedDeclarationName = pojoClass.getQualifiedDeclarationName();
+
+                if ( pcQualifiedDeclarationName.equals( pojoClassQualifiedDeclarationName ) ) {
+                    df = (DocFile) entityDocFiles.get( pojoClass );
+                    break;
+                }
+            }
+
+
+        }
+        return df;
+    }
+
     /**
      * Returns the DocFile responsible to generate the .html for each classes.
+     *
      * @param pc The DocFile corresponding to this pc is retrieved from  entityDocFiles
+     *
      * @return DocFile
      */
-    public DocFile getEntityDocFile(POJOClass pc){
-    	return (DocFile) entityDocFiles.get(pc);
+    public DocFile getEntityDocFile(POJOClass pc) {
+        return (DocFile) entityDocFiles.get( pc );
     }
 
     /**
      * Return the summary DocFile for the specified schema FQN.
-     * 
+     *
      * @param schemaName the name of the schema.
-     * 
+     *
      * @return the DocFile.
      */
     public DocFile getSchemaSummaryDocFile(String schemaName) {
-        return (DocFile) schemaSummaryDocFiles.get(schemaName);
+        return (DocFile) schemaSummaryDocFiles.get( schemaName );
     }
-    
+
     /**
      * get DocFile responsible to generate summary.html for corresponding packageName passed
+     *
      * @param packageName DocFile corresponding to this packagename is retrieved from packageSummaryDocFiles
+     *
      * @return DocFile
      */
-    public DocFile getPackageSummaryDocFile(String packageName){
-    	return (DocFile) packageSummaryDocFiles.get(packageName);
+    public DocFile getPackageSummaryDocFile(String packageName) {
+        return (DocFile) packageSummaryDocFiles.get( packageName );
     }
 
     /**
      * Return the Table List DocFile for the specified schema FQN.
-     * 
+     *
      * @param schemaName the name of the schema.
-     * 
+     *
      * @return the DocFile.
      */
     public DocFile getSchemaTableListDocFile(String schemaName) {
-        return (DocFile) schemaTableListDocFiles.get(schemaName);
+        return (DocFile) schemaTableListDocFiles.get( schemaName );
     }
 
     /**
      * Return the relative reference between the specified files.
-     * 
+     *
      * @param from the origin.
      * @param to the target.
-     * 
+     *
      * @throws IllegalArgumentException if any parameter is null.
      */
     public String getRef(DocFile from, DocFile to) {
-        if (from == null) {
-            throw new IllegalArgumentException("From cannot be null.");
+        if ( from == null ) {
+            throw new IllegalArgumentException( "From cannot be null." );
         }
 
-        if (to == null) {
-            throw new IllegalArgumentException("To cannot be null.");
+        if ( to == null ) {
+            throw new IllegalArgumentException( "To cannot be null." );
         }
 
-        return from.buildRefTo(to);
+        return from.buildRefTo( to );
     }
 
     /**
      * Copy a File.
-     * 
+     *
      * TODO: this method ignores custom provided templatepath. Want to call freemarker to get the resourceloaders but they are hidden, so we need another way.
      * ..and if we use currentthread classloader you might conflict with the projects tools.jar
-     * 
+     *
      * @param fileName the name of the file to copy.
      * @param to the target file.
-     * 
+     *
      * @throws IOException in case of error.
      */
     public static void copy(ClassLoader loader, String fileName, File to) throws IOException {
@@ -490,31 +531,33 @@ public class DocFileManager {
             }
 			
 			is = classLoader.getResourceAsStream(fileName);*/
-        	
+
             /*if (is == null && classLoader!=DocFileManager.class.getClassLoader() ) {
-				is = DocFileManager.class.getClassLoader().getResourceAsStream(fileName); // HACK: workaround since eclipse for some reason doesnt provide the right classloader;
-				
-            } */
-        	is = loader.getResourceAsStream( fileName );
-			
-			if(is==null) {
-                throw new IllegalArgumentException("File not found: "
-                        + fileName);
+               is = DocFileManager.class.getClassLoader().getResourceAsStream(fileName); // HACK: workaround since eclipse for some reason doesnt provide the right classloader;
+
+           } */
+            is = loader.getResourceAsStream( fileName );
+
+            if ( is == null ) {
+                throw new IllegalArgumentException(
+                        "File not found: "
+                                + fileName
+                );
             }
-            
-            out = new FileOutputStream(to);
+
+            out = new FileOutputStream( to );
 
             int value;
-            while ( (value = is.read() ) != -1) {
-                out.write(value);
+            while ( ( value = is.read() ) != -1 ) {
+                out.write( value );
             }
 
-        } 
+        }
         finally {
-            if (is != null) {
+            if ( is != null ) {
                 is.close();
             }
-            if (out != null) {
+            if ( out != null ) {
                 out.close();
             }
         }

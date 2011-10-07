@@ -34,11 +34,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
+import org.junit.Test;
+
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.cfg.AnnotationConfiguration;
-import org.hibernate.cfg.JDBCMetaDataConfiguration;
+import org.hibernate.cfg.Configuration;
 import org.hibernate.mapping.ForeignKey;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
@@ -56,12 +57,7 @@ import static org.junit.Assert.assertTrue;
  * @author max
  */
 public class CompositeIdJPATest extends JDBCMetaDataBinderTestCase {
-
-
-    protected void configure(JDBCMetaDataConfiguration configuration) {
-        super.configure( configuration );
-    }
-
+    @Override
     protected String[] getCreateSQL() {
 
         return new String[] {
@@ -83,7 +79,7 @@ public class CompositeIdJPATest extends JDBCMetaDataBinderTestCase {
                         "    			)",
         };
     }
-
+    @Override
     protected String[] getDropSQL() {
         return new String[] {
                 "drop table Vehicle",
@@ -94,6 +90,7 @@ public class CompositeIdJPATest extends JDBCMetaDataBinderTestCase {
         };
     }
 
+    @Test
     public void testMultiColumnForeignKeys() {
 
         Table vehicleTable = getTable( identifier( "Vehicle" ) );
@@ -107,21 +104,21 @@ public class CompositeIdJPATest extends JDBCMetaDataBinderTestCase {
         foreignKey = getForeignKey( vehicleTable, identifier( "vehicle_modelyear" ) );
         assertEquals( foreignKey.getColumnSpan(), 3 );
 
-        PersistentClass vehicle = getConfiguration().getClassMapping( "Vehicle" );
+        PersistentClass vehicle = getJDBCMetaDataConfiguration().getClassMapping( "Vehicle" );
         EntityPOJOClass vechiclePojo = new EntityPOJOClass( vehicle, new Cfg2JavaTool() );
         assertNotNull( vechiclePojo.getDecoratedObject() );
 
         Property property = vehicle.getProperty( "modelyear" );
         assertNotNull( property );
-        String generateJoinColumnsAnnotation = vechiclePojo.generateJoinColumnsAnnotation( property, cfg );
+        String generateJoinColumnsAnnotation = vechiclePojo.generateJoinColumnsAnnotation( property, getJDBCMetaDataConfiguration() );
         assertTrue( generateJoinColumnsAnnotation.indexOf( "referencedColumnName=\"MAKE\"" ) > 0 );
 
 
     }
 
+    @Test
     public void testJPAGeneration() throws Exception {
-        getConfiguration().buildMappings();
-        POJOExporter exporter = new POJOExporter( getConfiguration(), serviceRegistry(), getOutputDir() );
+        POJOExporter exporter = new POJOExporter( getJDBCMetaDataConfiguration(), serviceRegistry(), getOutputDir() );
         Properties p = new Properties();
         p.setProperty( "jdk5", "true" );
         p.setProperty( "ejb3", "true" );
@@ -129,7 +126,7 @@ public class CompositeIdJPATest extends JDBCMetaDataBinderTestCase {
         exporter.setProperties( p );
         exporter.start();
 
-        File file = new File( "ejb3compilable" );
+        File file = new File(getOutputDir(), "ejb3compilable" );
         file.mkdir();
 
         ArrayList list = new ArrayList();
@@ -139,12 +136,12 @@ public class CompositeIdJPATest extends JDBCMetaDataBinderTestCase {
         new ExecuteContext( getOutputDir(), file, jars ) {
 
             protected void execute() throws Exception {
-                AnnotationConfiguration configuration = new AnnotationConfiguration();
+                Configuration configuration = new Configuration();
                 configuration.addAnnotatedClass( getUcl().loadClass( "Vehicle" ) );
                 configuration.addAnnotatedClass( getUcl().loadClass( "Person" ) );
                 configuration.addAnnotatedClass( getUcl().loadClass( "Modelyear" ) );
 
-                SessionFactory sf = configuration.buildSessionFactory();
+                SessionFactory sf = configuration.buildSessionFactory( serviceRegistry() );
                 Session s = sf.openSession();
                 Query createQuery = s.createQuery( "from java.lang.Object" );
                 createQuery.list();
@@ -157,11 +154,10 @@ public class CompositeIdJPATest extends JDBCMetaDataBinderTestCase {
     }
 
     private void addAnnotationJars(List jars) {
-        jars.add( "ejb3-persistence.jar" );
-        jars.add( "hibernate-annotations.jar" );
+        jars.add( "antlr.jar" );
+        jars.add( "hibernate-core.jar" );
         jars.add( "hibernate-commons-annotations.jar" );
-        jars.add( "hibernate3.jar" );
-        jars.add( "dom4j-1.6.1.jar" );
+        jars.add( "hibernate-jpa-2.0-api.jar" );
         jars.add( "commons-logging-1.0.4.jar" );
 
     }

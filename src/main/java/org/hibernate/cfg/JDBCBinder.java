@@ -87,38 +87,29 @@ import org.hibernate.type.TypeResolver;
  */
 public class JDBCBinder {
 
-    private Settings settings;
-    private ConnectionProvider connectionProvider;
-    private static final Log log = LogFactory.getLog( JDBCBinder.class );
 
-    private final Mappings mappings;
+    private static final Log log = LogFactory.getLog( JDBCBinder.class );
 
     private final JDBCMetaDataConfiguration cfg;
     private final ServiceRegistry serviceRegistry;
-    private ReverseEngineeringStrategy revengStrategy;
+    private final Settings settings;
+    private final Mappings mappings;
+    private final ReverseEngineeringStrategy revengStrategy;
+    private final JdbcServices jdbcServices;
+    private final TypeResolver typeResolver;
 
-
-    /**
-     * @param mappings
-     * @param configuration
-     */
     public JDBCBinder(JDBCMetaDataConfiguration cfg, ServiceRegistry serviceRegistry, Settings settings, Mappings mappings, ReverseEngineeringStrategy revengStrategy) {
         this.cfg = cfg;
         this.settings = settings;
         this.mappings = mappings;
         this.revengStrategy = revengStrategy;
         this.serviceRegistry = serviceRegistry;
+        this.jdbcServices = serviceRegistry.getService( JdbcServices.class );
+        this.typeResolver = cfg.getTypeResolver();
     }
 
-    /**
-     *
-     */
-    public void readFromDatabase(String catalog, String schema, Mapping mapping) {
-        JdbcServices jdbcServices = serviceRegistry.getService( JdbcServices.class );
-        this.connectionProvider = jdbcServices.getConnectionProvider();
-
+    public void readFromDatabase(final String catalog, final String schema, final Mapping mapping) {
         try {
-
             DatabaseCollector collector = readDatabaseSchema( catalog, schema );
             createPersistentClasses( collector, mapping ); //move this to a different step!
         }
@@ -127,28 +118,15 @@ public class JDBCBinder {
                     .getSqlExceptionConverter()
                     .convert( e, "Reading from database", null );
         }
-        finally {
-            if ( connectionProvider != null ) {
-//                connectionProvider.close(); todo fixme
-            }
-        }
-
     }
 
     /**
      * Read JDBC Metadata from the database. Does not create any classes or other ORM releated structures.
-     *
-     * @param catalog
-     * @param schema
-     *
-     * @return
-     *
-     * @throws SQLException
      */
-    public DatabaseCollector readDatabaseSchema(String catalog, String schema) throws SQLException {
+    public DatabaseCollector readDatabaseSchema(final String catalog, final String schema) throws SQLException {
         // use default from settings if nothing else specified.
-        catalog = catalog != null ? catalog : settings.getDefaultCatalogName();
-        schema = schema != null ? schema : settings.getDefaultSchemaName();
+        String catalogName = catalog != null ? catalog : settings.getDefaultCatalogName();
+        String schemaName = schema != null ? schema : settings.getDefaultSchemaName();
 
         JDBCReader reader = JDBCReaderFactory.newJDBCReader(
                 cfg.getProperties(),
@@ -157,15 +135,10 @@ public class JDBCBinder {
                 revengStrategy
         );
         DatabaseCollector dbs = new MappingsDatabaseCollector( mappings, reader.getMetaDataDialect() );
-        reader.readDatabaseSchema( dbs, catalog, schema );
+        reader.readDatabaseSchema( dbs, catalogName, schemaName );
         return dbs;
     }
 
-
-    /**
-     * @param manyToOneCandidates
-     * @param mappings2
-     */
     private void createPersistentClasses(DatabaseCollector collector, Mapping mapping) {
         Map manyToOneCandidates = collector.getOneToManyCandidates();
 
@@ -263,12 +236,7 @@ public class JDBCBinder {
     }
 
     private Map safeMeta(Map map) {
-        if ( map == null ) {
-            return new HashMap();
-        }
-        else {
-            return map;
-        }
+        return map == null ? new HashMap() : map;
     }
 
     // bind collections.
@@ -351,15 +319,6 @@ public class JDBCBinder {
         //        true, true, value.getFetchMode() != FetchMode.JOIN, null, null);
     }
 
-    /**
-     * @param mutable
-     * @param table
-     * @param fk
-     * @param columnsToBind
-     * @param processedColumns
-     * @param rc
-     * @param propName
-     */
     private Property bindManyToOne(String propertyName, boolean mutable, Table table, ForeignKey fk, Set processedColumns) {
         ManyToOne value = new ManyToOne( mappings, table );
         value.setReferencedEntityName( fk.getReferencedEntityName() );
@@ -934,12 +893,6 @@ public class JDBCBinder {
         }
     }
 
-    /**
-     * @param column
-     * @param generatedIdentifier
-     *
-     * @return
-     */
     private String guessAndAlignType(Table table, Column column, Mapping mapping, boolean generatedIdentifier) {
         // TODO: this method mutates the column if the types does not match...not good.
         // maybe we should copy the column instead before calling this method.
@@ -960,7 +913,7 @@ public class JDBCBinder {
                 column.getLength(), column.getPrecision(), column.getScale(), column.isNullable(), generatedIdentifier
         );
 
-        Type wantedType = new TypeResolver().heuristicType( preferredHibernateType );// todo TypeFactory.heuristicType(preferredHibernateType);
+        Type wantedType = typeResolver.heuristicType( preferredHibernateType );// todo TypeFactory.heuristicType(preferredHibernateType);
 
         if ( wantedType != null ) {
             int[] wantedSqlTypes = wantedType.sqlTypes( mapping );
@@ -970,13 +923,13 @@ public class JDBCBinder {
             }
 
             int wantedSqlType = wantedSqlTypes[0];
-            if ( wantedSqlType != sqlTypeCode.intValue() ) {
+            if ( wantedSqlType != sqlTypeCode ) {
                 log.debug(
                         "Sql type mismatch for " + location + " between DB and wanted hibernate type. Sql type set to " + typeCodeName(
-                                sqlTypeCode.intValue()
+                                sqlTypeCode
                         ) + " instead of " + typeCodeName( wantedSqlType )
                 );
-                column.setSqlTypeCode( new Integer( wantedSqlType ) );
+                column.setSqlTypeCode( wantedSqlType );
             }
         }
         else {
@@ -1186,12 +1139,6 @@ public class JDBCBinder {
         return property;
     }
 
-    /**
-     * @param pkc
-     * @param string
-     *
-     * @return
-     */
     private String makeUnique(Component clazz, String propertyName) {
         return makeUnique( clazz.getPropertyIterator(), propertyName );
     }
@@ -1211,12 +1158,6 @@ public class JDBCBinder {
         return makeUnique( iterator, propertyName );
     }
 
-    /**
-     * @param clazz
-     * @param propertyName
-     *
-     * @return
-     */
     private static String makeUnique(Iterator props, String originalPropertyName) {
         int cnt = 0;
         String propertyName = originalPropertyName;
@@ -1258,10 +1199,6 @@ public class JDBCBinder {
 
     static class JDBCCollectionSecondPass extends CollectionSecondPass {
 
-        /**
-         * @param mappings
-         * @param coll
-         */
         JDBCCollectionSecondPass(Mappings mappings, Collection coll) {
             super( mappings, coll );
         }
